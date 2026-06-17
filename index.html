@@ -1,251 +1,647 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Centro de carga</title>
 <style>
-*{box-sizing:border-box;margin:0;padding:0}
-.wrap{padding:1rem 0; font-family: var(--font-sans, system-ui, -apple-system, "Segoe UI", sans-serif);}
-h2{font-size:18px;font-weight:500;color:var(--color-text-primary, #1a1a1a);margin-bottom:4px}
-.sub{font-size:13px;color:var(--color-text-secondary, #6b6b65);margin-bottom:1.5rem}
-.metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-bottom:1.5rem}
-.metric{background:var(--color-background-secondary, #f4f3f1);border-radius:var(--border-radius-md, 8px);padding:.85rem 1rem}
-.metric .label{font-size:12px;color:var(--color-text-secondary, #6b6b65);margin-bottom:4px}
-.metric .val{font-size:20px;font-weight:500;color:var(--color-text-primary, #1a1a1a)}
-.metric .val.ok{color:#2D7A3A}.metric .val.warn{color:#B87D00}.metric .val.bad{color:#A32D2D}
-.phase-bars{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:1.5rem}
-.phase-col{background:var(--color-background-primary, #ffffff);border:0.5px solid var(--color-border-tertiary, #e5e3dd);border-radius:var(--border-radius-lg, 12px);padding:1rem}
-.phase-col h3{font-size:12px;font-weight:500;color:var(--color-text-secondary, #6b6b65);letter-spacing:.05em;text-transform:uppercase;margin-bottom:.5rem}
-.phase-col .atotal{font-size:20px;font-weight:500;color:var(--color-text-primary, #1a1a1a);margin-bottom:.15rem}
-.phase-col .ptotal{font-size:12px;color:var(--color-text-secondary, #6b6b65);margin-bottom:.5rem}
-.bar-wrap{height:6px;background:var(--color-background-secondary, #f4f3f1);border-radius:99px;margin-bottom:.75rem}
-.bar{height:100%;border-radius:99px;transition:width .4s ease}
-.phase-a .bar{background:#185FA5}.phase-b .bar{background:#3B6D11}.phase-c .bar{background:#993C1D}
-.circuit-list{display:flex;flex-direction:column;gap:5px}
-.circuit-row{display:flex;align-items:center;gap:6px;font-size:12px}
-.circuit-row .cname{color:var(--color-text-secondary, #6b6b65);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.circuit-row .camp{color:var(--color-text-primary, #1a1a1a);font-weight:500;min-width:38px;text-align:right}
-.badge{font-size:10px;padding:1px 6px;border-radius:99px;font-weight:500;white-space:nowrap}
-.b-110{background:#E6F1FB;color:#0C447C}.b-220{background:#EAF3DE;color:#27500A}.b-3f{background:#FAEEDA;color:#633806}
-.card{background:var(--color-background-primary, #ffffff);border:0.5px solid var(--color-border-tertiary, #e5e3dd);border-radius:var(--border-radius-lg, 12px);padding:1rem 1.25rem;margin-bottom:1rem}
-.card h3{font-size:12px;font-weight:500;color:var(--color-text-secondary, #6b6b65);letter-spacing:.05em;text-transform:uppercase;margin-bottom:.75rem}
-.field-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:10px}
-.field-row label{font-size:12px;color:var(--color-text-secondary, #6b6b65);min-width:60px}
-input,select{padding:6px 10px;font-size:13px;border:0.5px solid var(--color-border-secondary, #d8d6d0);border-radius:var(--border-radius-md, 8px);background:var(--color-background-primary, #ffffff);color:var(--color-text-primary, #1a1a1a)}
-#c-name{width:180px}
-#c-amp{width:76px}
-.phase-group{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
-.ph-btn{padding:4px 12px;font-size:12px;border-radius:99px;border:0.5px solid var(--color-border-secondary, #d8d6d0);cursor:pointer;background:var(--color-background-secondary, #f4f3f1);color:var(--color-text-secondary, #6b6b65);transition:all .15s;user-select:none}
-.ph-btn.sel-A{background:#E6F1FB;border-color:#185FA5;color:#185FA5;font-weight:500}
-.ph-btn.sel-B{background:#EAF3DE;border-color:#3B6D11;color:#3B6D11;font-weight:500}
-.ph-btn.sel-C{background:#FAECE7;border-color:#993C1D;color:#993C1D;font-weight:500}
-.ph-btn.sel-AB,.ph-btn.sel-BC,.ph-btn.sel-AC,.ph-btn.sel-ABC{background:#FAEEDA;border-color:#854F0B;color:#854F0B;font-weight:500}
-.hint{font-size:11px;color:var(--color-text-secondary, #6b6b65);margin-top:6px;min-height:14px}
-.err-msg{font-size:12px;color:#A32D2D;margin-top:6px;min-height:14px}
-.add-btn{padding:6px 14px;font-size:13px;border-radius:var(--border-radius-md, 8px);cursor:pointer;border:0.5px solid var(--color-border-secondary, #d8d6d0);background:var(--color-background-primary, #ffffff);color:var(--color-text-primary, #1a1a1a);margin-top:4px}
-.add-btn:hover{background:var(--color-background-secondary, #f4f3f1)}
-.cancel-btn{padding:6px 14px;font-size:13px;border-radius:var(--border-radius-md, 8px);cursor:pointer;border:0.5px solid var(--color-border-secondary, #d8d6d0);background:transparent;color:var(--color-text-secondary, #6b6b65);margin-top:4px;margin-left:6px}
-.cancel-btn:hover{background:var(--color-background-secondary, #f4f3f1)}
-.suggest-btn{margin-top:.75rem;font-size:12px;padding:5px 14px;border-radius:99px;border:0.5px solid var(--color-border-secondary, #d8d6d0);background:var(--color-background-secondary, #f4f3f1);color:var(--color-text-secondary, #6b6b65);cursor:pointer; font-weight: 500;}
-.suggest-btn:hover{background:var(--color-background-tertiary, #ebe9e4)}
-.chip-row{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
-.chip{padding:3px 10px;font-size:11px;border-radius:99px;border:0.5px solid var(--color-border-secondary, #d8d6d0);background:var(--color-background-secondary, #f4f3f1);color:var(--color-text-secondary, #6b6b65);cursor:pointer}
-.chip:hover{background:var(--color-background-tertiary, #ebe9e4)}
-.settings-row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:.75rem 0}
-.settings-row label{font-size:12px;color:var(--color-text-secondary, #6b6b65)}
-.overflow-banner{background:#FAECE7;border:0.5px solid #993C1D;color:#712B13;border-radius:var(--border-radius-md, 8px);padding:.6rem .85rem;font-size:12px;margin-bottom:.75rem;line-height:1.4}
-.tbl{width:100%;border-collapse:collapse;font-size:12px}
-.tbl th{text-align:left;color:var(--color-text-secondary, #6b6b65);font-weight:400;border-bottom:0.5px solid var(--color-border-tertiary, #e5e3dd);padding:5px 6px}
-.tbl td{padding:5px 6px;color:var(--color-text-primary, #1a1a1a);border-bottom:0.5px solid var(--color-border-tertiary, #e5e3dd)}
-.tbl td.pa{color:#185FA5;font-weight:500}.tbl td.pb{color:#3B6D11;font-weight:500}.tbl td.pc{color:#993C1D;font-weight:500}.tbl td.p3f{color:#854F0B;font-weight:500}
-.overflow-flag{color:#A32D2D;font-size:10px;font-weight:600}
-.del,.edit{cursor:pointer;color:var(--color-text-secondary, #6b6b65);border:none;background:transparent;font-size:14px;padding:0 4px}
-.del:hover{color:#A32D2D}
-.edit:hover{color:var(--color-text-primary, #1a1a1a)}
-.tab-btn{padding:5px 14px;font-size:12px;border-radius:99px;border:0.5px solid var(--color-border-secondary, #d8d6d0);cursor:pointer;background:var(--color-background-secondary, #f4f3f1);color:var(--color-text-secondary, #6b6b65);margin-right:6px}
-.tab-btn.active{background:var(--color-background-primary, #ffffff);color:var(--color-text-primary, #1a1a1a);font-weight:500;border-color:var(--color-border-primary, #1a1a1a)}
+:root{
+  --bg-base:#F2F2F7;
+  --bg-sidebar:rgba(247,247,250,0.92);
+  --bg-card:#FFFFFF;
+  --bg-card-alt:#F6F6F9;
+  --bg-input:#F2F2F6;
+  --text-primary:#1C1C1E;
+  --text-secondary:#6E6E73;
+  --text-tertiary:#AEAEB2;
+  --separator:rgba(60,60,67,0.13);
+  --separator-strong:rgba(60,60,67,0.24);
 
-.layout-container { display: flex; gap: 16px; align-items: flex-start; margin-bottom: .5rem; flex-wrap: wrap; }
-.panel-wrap { flex: 1; min-width: 300px; overflow-x: auto; }
-.panel-svg { display: block; }
-.unassigned-sidebar { 
-  flex: 0 0 240px; 
-  background: var(--color-background-secondary, #f4f3f1); 
-  border: 1.5px dashed var(--color-border-secondary, #d8d6d0); 
-  border-radius: var(--border-radius-lg, 12px); 
-  padding: 12px; 
-  min-height: 440px; 
-  align-self: stretch;
+  --blue:#007AFF; --blue-bg:#E8F1FE; --blue-text:#0040C7;
+  --green:#34C759; --green-bg:#E7F8EC; --green-text:#1B7A37;
+  --purple:#AF52DE; --purple-bg:#F3E8FC; --purple-text:#6B2E9E;
+  --orange:#FF9500; --orange-bg:#FFF1DC; --orange-text:#99570A;
+  --indigo:#5856D6; --indigo-bg:#ECEBFB; --indigo-text:#3A38A8;
+
+  --ok:#1F8A3B; --warn:#BF5B04; --bad:#D70015; --bad-bg:#FFE9E9;
+
+  --r-lg:18px; --r-md:13px; --r-sm:9px; --r-xs:7px;
+  --shadow-card:0 1px 1px rgba(0,0,0,0.03), 0 6px 16px rgba(28,28,30,0.05);
+  --shadow-pop:0 2px 4px rgba(0,0,0,0.06), 0 10px 24px rgba(28,28,30,0.10);
+  --font:-apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
 }
-.unassigned-sidebar.drag-over { background: #e5e3dd; border-color: #1a1a1a; }
-.u-item {
-  background: var(--color-background-primary, #ffffff);
-  border: 0.5px solid var(--color-border-secondary, #d8d6d0);
-  border-radius: 6px;
-  padding: 8px;
-  margin-bottom: 8px;
-  font-size: 11px;
-  cursor: grab;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-  transition: transform 0.1s;
+
+*{box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent;}
+html,body{height:100%;}
+body{
+  font-family:var(--font);
+  background:var(--bg-base);
+  color:var(--text-primary);
+  -webkit-font-smoothing:antialiased;
 }
-.u-item:active { cursor: grabbing; transform: scale(0.98); }
-.u-item-title { font-weight: 500; margin-bottom: 4px; color: var(--color-text-primary, #1a1a1a); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.u-item-meta { display: flex; justify-content: space-between; color: var(--color-text-secondary, #6b6b65); }
+button, input, select{font-family:inherit;}
+button{cursor:pointer;}
+svg{display:block;}
 
-.svg-drop-target { transition: all 0.15s ease; }
-.svg-drop-target.drag-hover { stroke: #1a1a1a !important; stroke-width: 3px !important; filter: brightness(0.95); opacity: 0.95; }
-.tips-box { background: #F4F3F1; padding: 10px 14px; border-radius: 8px; font-size: 12px; color: #6B6B65; margin-bottom: 14px; display:flex; align-items:center; gap:10px; line-height: 1.4; border: 0.5px solid #d8d6d0;}
+/* ============ App shell ============ */
+.app{
+  height:100vh;
+  display:flex;
+  flex-direction:column;
+  overflow:hidden;
+}
 
-@media print {
-  body { background: #ffffff; }
-  * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-  .card:nth-of-type(2), .settings-row, .tab-btn, #btn-export-pdf, .edit, .del, .chip-row, .suggest-btn, .unassigned-sidebar, .tips-box { display: none !important; }
-  .wrap { max-width: 100%; padding: 0; }
-  .card { border: none; padding: 0; margin-bottom: 2rem; page-break-inside: avoid; }
-  .panel-wrap { overflow: visible !important; }
-  .metrics, .phase-bars { page-break-inside: avoid; }
-  .tbl { page-break-inside: auto; }
-  .tbl tr { page-break-inside: avoid; page-break-after: auto; }
+/* ---- Top bar (large title, translucent) ---- */
+.topbar{
+  flex:0 0 auto;
+  background:rgba(242,242,247,0.82);
+  backdrop-filter:blur(20px) saturate(1.6);
+  -webkit-backdrop-filter:blur(20px) saturate(1.6);
+  border-bottom:0.5px solid var(--separator-strong);
+  padding:14px 22px;
+  display:flex;
+  align-items:center;
+  gap:14px;
+  z-index:20;
+}
+.app-icon{
+  flex:0 0 auto;
+  width:42px; height:42px;
+  border-radius:11px;
+  background:linear-gradient(160deg,#3B9CFF 0%, #007AFF 55%, #4A4AD6 100%);
+  display:flex; align-items:center; justify-content:center;
+  box-shadow:0 2px 6px rgba(0,90,220,0.35), inset 0 1px 0 rgba(255,255,255,0.35);
+}
+.app-icon svg{width:22px;height:22px;}
+.topbar-titles{display:flex; flex-direction:column; min-width:0;}
+.topbar-titles h1{
+  font-size:21px; font-weight:700; letter-spacing:-0.01em;
+  color:var(--text-primary); line-height:1.2;
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+}
+.topbar-titles .sub{
+  font-size:12.5px; color:var(--text-secondary); margin-top:1px;
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:62vw;
+}
+
+/* ---- Body: sidebar + content ---- */
+.shell{flex:1 1 auto; display:flex; min-height:0; overflow:hidden;}
+
+.sidebar{
+  flex:0 0 252px;
+  background:var(--bg-sidebar);
+  backdrop-filter:blur(20px);
+  -webkit-backdrop-filter:blur(20px);
+  border-right:0.5px solid var(--separator-strong);
+  padding:16px 12px;
+  overflow-y:auto;
+  display:flex; flex-direction:column; gap:18px;
+}
+.side-nav{display:flex; flex-direction:column; gap:2px;}
+.side-link{
+  display:flex; align-items:center; gap:10px;
+  border:none; background:transparent;
+  padding:9px 10px; border-radius:var(--r-sm);
+  font-size:14.5px; font-weight:500; color:var(--text-primary);
+  text-align:left; width:100%;
+  transition:background .12s ease;
+}
+.side-link svg{flex:0 0 auto; width:19px; height:19px; color:var(--text-secondary);}
+.side-link:hover{background:rgba(60,60,67,0.06);}
+.side-link.active{background:var(--blue); color:#fff;}
+.side-link.active svg{color:#fff;}
+
+.side-divider{height:0.5px; background:var(--separator-strong); margin:0 4px;}
+
+.side-config{display:flex; flex-direction:column; gap:10px;}
+.side-config-header{
+  display:flex; align-items:center; gap:6px;
+  font-size:12px; font-weight:600; text-transform:uppercase; letter-spacing:0.04em;
+  color:var(--text-secondary); padding:0 10px 2px;
+}
+.side-config-header svg{width:13px; height:13px;}
+.config-card{
+  background:var(--bg-card); border-radius:var(--r-md);
+  box-shadow:var(--shadow-card);
+  overflow:hidden;
+}
+.config-row{
+  display:flex; flex-direction:column; gap:6px;
+  padding:10px 12px;
+  border-bottom:0.5px solid var(--separator);
+}
+.config-row:last-child{border-bottom:none;}
+.config-row label{font-size:11.5px; color:var(--text-secondary); font-weight:500;}
+
+/* native-feeling select / input controls */
+select, .num-wrap{
+  width:100%;
+}
+select{
+  appearance:none; -webkit-appearance:none;
+  background:var(--bg-input);
+  border:none;
+  border-radius:var(--r-xs);
+  padding:7px 28px 7px 10px;
+  font-size:13.5px; color:var(--text-primary); font-weight:500;
+  background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='none' stroke='%236E6E73' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M6 8l4 4 4-4'/></svg>");
+  background-repeat:no-repeat;
+  background-position:right 8px center;
+  background-size:14px 14px;
+}
+input[type="number"], input[type="text"]{
+  border:none;
+  background:var(--bg-input);
+  border-radius:var(--r-xs);
+  padding:7px 10px;
+  font-size:13.5px; color:var(--text-primary);
+  width:100%;
+}
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button{ -webkit-appearance:none; margin:0; }
+input:focus, select:focus{ outline:2px solid var(--blue); outline-offset:1px; }
+
+.num-wrap{display:flex; align-items:center; gap:8px; background:var(--bg-input); border-radius:var(--r-xs); padding:0 10px;}
+.num-wrap input{background:transparent; padding:7px 0; width:100%;}
+.num-wrap .unit{font-size:12.5px; color:var(--text-secondary); font-weight:600;}
+
+/* ---- Content area ---- */
+.content{
+  flex:1 1 auto;
+  overflow-y:auto;
+  padding:22px 26px 60px;
+}
+.panel{display:none;}
+.panel.active{display:block;}
+
+.section-heading{
+  font-size:12.5px; font-weight:600; text-transform:uppercase; letter-spacing:0.04em;
+  color:var(--text-secondary); margin-bottom:10px;
+}
+
+/* ============ Resumen: metric cards ============ */
+.metrics{display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:12px; margin-bottom:22px;}
+.metric{
+  background:var(--bg-card); border-radius:var(--r-md);
+  box-shadow:var(--shadow-card);
+  padding:14px 16px;
+}
+.metric .label{font-size:12px; color:var(--text-secondary); margin-bottom:6px; font-weight:500;}
+.metric .val{font-size:23px; font-weight:700; letter-spacing:-0.01em; color:var(--text-primary);}
+.metric .val.ok{color:var(--ok);}
+.metric .val.warn{color:var(--warn);}
+.metric .val.bad{color:var(--bad);}
+
+.phase-bars{display:grid; grid-template-columns:repeat(3,1fr); gap:14px;}
+.phase-col{
+  background:var(--bg-card); border-radius:var(--r-lg);
+  box-shadow:var(--shadow-card);
+  padding:16px;
+}
+.phase-col h3{
+  display:flex; align-items:center; gap:8px;
+  font-size:12px; font-weight:600; color:var(--text-secondary);
+  letter-spacing:0.04em; text-transform:uppercase; margin-bottom:10px;
+}
+.phase-dot{width:9px; height:9px; border-radius:50%; display:inline-block;}
+.phase-a .phase-dot{background:var(--blue);}
+.phase-b .phase-dot{background:var(--green);}
+.phase-c .phase-dot{background:var(--purple);}
+.phase-col .atotal{font-size:21px; font-weight:700; color:var(--text-primary); margin-bottom:1px;}
+.phase-col .ptotal{font-size:12px; color:var(--text-secondary); margin-bottom:12px;}
+.bar-wrap{height:7px; background:var(--bg-card-alt); border-radius:99px; margin-bottom:12px; overflow:hidden;}
+.bar{height:100%; border-radius:99px; transition:width .4s ease;}
+.phase-a .bar{background:var(--blue);}
+.phase-b .bar{background:var(--green);}
+.phase-c .bar{background:var(--purple);}
+.circuit-list{display:flex; flex-direction:column; gap:7px; max-height:260px; overflow-y:auto;}
+.circuit-row{display:flex; align-items:center; gap:7px; font-size:12.5px;}
+.circuit-row .cname{color:var(--text-secondary); flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+.circuit-row .camp{color:var(--text-primary); font-weight:600; min-width:42px; text-align:right;}
+
+.badge{font-size:10px; padding:2px 7px; border-radius:99px; font-weight:600; white-space:nowrap;}
+.b-110{background:var(--blue-bg); color:var(--blue-text);}
+.b-220{background:var(--green-bg); color:var(--green-text);}
+.b-3f{background:var(--orange-bg); color:var(--orange-text);}
+
+/* ============ Cards (shared) ============ */
+.card{
+  background:var(--bg-card); border-radius:var(--r-lg);
+  box-shadow:var(--shadow-card);
+  padding:18px 20px; margin-bottom:18px;
+}
+.card h3{font-size:12.5px; font-weight:600; color:var(--text-secondary); letter-spacing:0.04em; text-transform:uppercase; margin-bottom:14px;}
+
+/* ============ Diagrama section ============ */
+.section-toolbar{display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:14px; flex-wrap:wrap;}
+
+.segmented{
+  display:inline-flex; background:rgba(118,118,128,0.12); border-radius:var(--r-sm);
+  padding:2px; gap:2px;
+}
+.seg-btn{
+  border:none; background:transparent; color:var(--text-secondary);
+  font-size:13px; font-weight:600; padding:7px 16px; border-radius:calc(var(--r-sm) - 2px);
+  transition:background .15s ease, color .15s ease;
+}
+.seg-btn.active{background:#fff; color:var(--text-primary); box-shadow:0 1px 3px rgba(0,0,0,0.12);}
+
+.export-btn{
+  display:flex; align-items:center; gap:6px;
+  border:none; background:var(--text-primary); color:#fff;
+  font-size:13px; font-weight:600; padding:8px 16px; border-radius:99px;
+}
+.export-btn svg{width:14px; height:14px;}
+.export-btn:hover{background:#000;}
+
+.overflow-banner{
+  display:flex; align-items:flex-start; gap:10px;
+  background:var(--orange-bg); border:0.5px solid rgba(255,149,0,0.35);
+  color:var(--orange-text); border-radius:var(--r-md);
+  padding:10px 14px; font-size:12.5px; line-height:1.4; margin-bottom:12px;
+}
+.overflow-banner svg{flex:0 0 auto; width:16px; height:16px; margin-top:1px;}
+
+.tips-box{
+  display:flex; align-items:flex-start; gap:10px;
+  background:var(--bg-card-alt); border-radius:var(--r-md);
+  padding:11px 14px; font-size:12.5px; color:var(--text-secondary);
+  margin-bottom:16px; line-height:1.5;
+}
+.tips-box svg{flex:0 0 auto; width:17px; height:17px; color:var(--orange); margin-top:1px;}
+.tips-box strong{color:var(--text-primary);}
+
+.layout-container{display:flex; gap:16px; align-items:flex-start; margin-bottom:14px; flex-wrap:wrap;}
+.panel-wrap{flex:1; min-width:320px; overflow-x:auto; background:var(--bg-card); border-radius:var(--r-lg); box-shadow:var(--shadow-card); padding:6px;}
+.panel-svg{display:block;}
+
+.unassigned-sidebar{
+  flex:0 0 230px;
+  background:var(--bg-card-alt);
+  border:1.5px dashed var(--separator-strong);
+  border-radius:var(--r-lg);
+  padding:12px;
+  min-height:440px;
+  align-self:stretch;
+  transition:background .15s ease, border-color .15s ease;
+}
+.unassigned-sidebar h4{
+  font-size:11.5px; margin-bottom:12px; color:var(--text-secondary);
+  text-transform:uppercase; letter-spacing:0.04em; font-weight:600;
+}
+.unassigned-sidebar.drag-over{background:var(--blue-bg); border-color:var(--blue);}
+.u-item{
+  background:var(--bg-card);
+  border:none;
+  border-radius:var(--r-xs);
+  padding:9px 10px;
+  margin-bottom:8px;
+  font-size:11.5px;
+  cursor:grab;
+  box-shadow:0 1px 2px rgba(0,0,0,0.06);
+  transition:transform .1s;
+}
+.u-item:active{cursor:grabbing; transform:scale(0.98);}
+.u-item-title{font-weight:600; margin-bottom:5px; color:var(--text-primary); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.u-item-meta{display:flex; justify-content:space-between; align-items:center; color:var(--text-secondary);}
+
+.svg-drop-target{transition:all .15s ease;}
+.svg-drop-target.drag-hover{stroke:var(--blue) !important; stroke-width:3px !important; filter:brightness(0.97); opacity:0.95;}
+
+.legend-row{display:flex; gap:18px; margin-top:10px; flex-wrap:wrap;}
+.legend-item{font-size:11.5px; color:var(--text-secondary); display:flex; align-items:center; gap:6px;}
+.legend-swatch{width:11px; height:11px; border-radius:3px; display:inline-block;}
+
+/* ============ Circuitos: form ============ */
+.form-card h3{margin-bottom:16px;}
+.form-row{display:flex; gap:12px; align-items:flex-end; flex-wrap:wrap; margin-bottom:14px;}
+.field{display:flex; flex-direction:column; gap:6px;}
+.field label{font-size:12px; color:var(--text-secondary); font-weight:500;}
+#c-name{min-width:220px;}
+#c-amp{width:96px;}
+#c-volt{width:auto; min-width:180px;}
+
+.chip-row{display:flex; gap:7px; flex-wrap:wrap; margin:2px 0 16px;}
+.chip{
+  padding:5px 13px; font-size:12px; font-weight:600;
+  border-radius:99px; border:none;
+  background:var(--bg-card-alt); color:var(--text-secondary);
+}
+.chip:hover{background:var(--blue-bg); color:var(--blue-text);}
+
+.phase-block{margin-bottom:6px;}
+.field-label{font-size:12px; color:var(--text-secondary); margin-bottom:8px; font-weight:500;}
+.phase-group{flex-wrap:wrap;}
+.ph-btn{
+  padding:7px 16px; font-size:13px; font-weight:600;
+  border-radius:calc(var(--r-sm) - 2px);
+  border:none; background:transparent; color:var(--text-secondary);
+  transition:all .15s ease; user-select:none;
+}
+.ph-btn.sel-A{background:#fff; color:var(--blue-text); box-shadow:0 1px 3px rgba(0,0,0,0.12);}
+.ph-btn.sel-B{background:#fff; color:var(--green-text); box-shadow:0 1px 3px rgba(0,0,0,0.12);}
+.ph-btn.sel-C{background:#fff; color:var(--purple-text); box-shadow:0 1px 3px rgba(0,0,0,0.12);}
+.ph-btn.sel-AB,.ph-btn.sel-BC,.ph-btn.sel-AC,.ph-btn.sel-ABC{background:#fff; color:var(--orange-text); box-shadow:0 1px 3px rgba(0,0,0,0.12);}
+.hint{font-size:11.5px; color:var(--text-tertiary); margin-top:8px; min-height:14px;}
+.err-msg{font-size:12.5px; color:var(--bad); margin-top:4px; min-height:16px; font-weight:500;}
+
+.form-actions{display:flex; gap:10px; align-items:center; margin-top:8px; flex-wrap:wrap;}
+.btn-primary{
+  padding:9px 20px; font-size:14px; font-weight:600;
+  border-radius:99px; border:none;
+  background:var(--blue); color:#fff;
+}
+.btn-primary:hover{background:#0067D6;}
+.btn-plain{
+  padding:9px 16px; font-size:14px; font-weight:500;
+  border-radius:99px; border:none;
+  background:transparent; color:var(--blue);
+}
+.btn-plain:hover{background:var(--blue-bg);}
+
+.suggest-btn{
+  display:inline-flex; align-items:center; gap:7px;
+  margin-top:16px; font-size:13px; font-weight:600;
+  padding:9px 18px; border-radius:99px; border:none;
+  background:linear-gradient(135deg, var(--indigo-bg), var(--purple-bg));
+  color:var(--indigo-text);
+}
+.suggest-btn svg{width:14px; height:14px;}
+.suggest-btn:hover{background:linear-gradient(135deg, #DFDCFA, #ECD8FA);}
+
+/* ============ Tabla ============ */
+.tbl{width:100%; border-collapse:collapse; font-size:12.5px;}
+.tbl th{
+  text-align:left; color:var(--text-secondary); font-weight:600; font-size:11px;
+  text-transform:uppercase; letter-spacing:0.03em;
+  border-bottom:0.5px solid var(--separator-strong); padding:8px 8px;
+}
+.tbl td{padding:9px 8px; color:var(--text-primary); border-bottom:0.5px solid var(--separator);}
+.tbl tr:last-child td{border-bottom:none;}
+.tbl tr:hover td{background:var(--bg-card-alt);}
+.tbl td.pa{color:var(--blue-text); font-weight:600;}
+.tbl td.pb{color:var(--green-text); font-weight:600;}
+.tbl td.pc{color:var(--purple-text); font-weight:600;}
+.tbl td.p3f{color:var(--orange-text); font-weight:600;}
+.overflow-flag{color:var(--bad); font-size:10px; font-weight:700; text-transform:uppercase;}
+.edit,.del{cursor:pointer; color:var(--text-secondary); border:none; background:transparent; font-size:14px; padding:2px 6px; border-radius:6px;}
+.edit:hover{color:var(--blue); background:var(--blue-bg);}
+.del:hover{color:var(--bad); background:var(--bad-bg);}
+
+/* ============ Responsive ============ */
+@media (max-width:880px){
+  .shell{flex-direction:column;}
+  .sidebar{
+    flex:0 0 auto; width:100%; flex-direction:row; align-items:center;
+    overflow-x:auto; overflow-y:visible; border-right:none;
+    border-bottom:0.5px solid var(--separator-strong); padding:10px 12px;
+  }
+  .side-nav{flex-direction:row;}
+  .side-divider{width:0.5px; height:28px; margin:0 6px;}
+  .side-config{flex-direction:row; gap:8px;}
+  .side-config-header{display:none;}
+  .config-card{display:flex; flex-direction:row;}
+  .config-row{border-bottom:none; border-right:0.5px solid var(--separator); min-width:140px;}
+  .config-row:last-child{border-right:none;}
+  .phase-bars{grid-template-columns:1fr;}
+  .content{padding:18px;}
+}
+
+/* ============ Print ============ */
+@media print{
+  body{background:#fff;}
+  *{-webkit-print-color-adjust:exact; print-color-adjust:exact;}
+  .topbar, .sidebar, .section-toolbar, .tips-box, .unassigned-sidebar, .edit, .del, .suggest-btn{display:none !important;}
+  .shell{display:block;}
+  .content{padding:0; overflow:visible;}
+  .panel{display:block !important; margin-bottom:28px;}
+  .card{box-shadow:none; border:0.5px solid var(--separator-strong); padding:14px; page-break-inside:avoid;}
+  .metric, .phase-col{box-shadow:none; border:0.5px solid var(--separator-strong);}
+  .panel-wrap{overflow:visible !important; box-shadow:none;}
+  .metrics, .phase-bars{page-break-inside:avoid;}
+  .tbl tr{page-break-inside:avoid;}
 }
 </style>
+</head>
+<body>
+<div class="app">
 
-<div class="wrap">
-<h2 id="main-title">Centro de carga trifásico</h2>
-<p class="sub" id="main-sub">Circuitos monofásicos 110 V / 220 V y trifásicos 220 V con distribución física real de espacios por fase.</p>
-
-<div class="metrics">
-  <div class="metric"><div class="label">Potencia total (En panel)</div><div class="val" id="m-kw">0 kW</div></div>
-  <div class="metric"><div class="label">Capacidad usada</div><div class="val" id="m-cap">0%</div></div>
-  <div class="metric"><div class="label">Promedio por fase</div><div class="val" id="m-avg">0 A</div></div>
-  <div class="metric"><div class="label">Desbalance</div><div class="val" id="m-unbal">—</div></div>
-  <div class="metric"><div class="label">Estado</div><div class="val" id="m-status">—</div></div>
-</div>
-
-<div class="phase-bars" id="phase-bars-container">
-  <div class="phase-col phase-a">
-    <h3>Fase A</h3>
-    <div class="atotal" id="fa-a">0 A</div>
-    <div class="ptotal" id="fa-w">0 kW</div>
-    <div class="bar-wrap"><div class="bar" id="fa-bar" style="width:0%"></div></div>
-    <div class="circuit-list" id="fa-list"></div>
-  </div>
-  <div class="phase-col phase-b">
-    <h3>Fase B</h3>
-    <div class="atotal" id="fb-a">0 A</div>
-    <div class="ptotal" id="fb-w">0 kW</div>
-    <div class="bar-wrap"><div class="bar" id="fb-bar" style="width:0%"></div></div>
-    <div class="circuit-list" id="fb-list"></div>
-  </div>
-  <div class="phase-col phase-c">
-    <h3>Fase C</h3>
-    <div class="atotal" id="fc-a">0 A</div>
-    <div class="ptotal" id="fc-w">0 kW</div>
-    <div class="bar-wrap"><div class="bar" id="fc-bar" style="width:0%"></div></div>
-    <div class="circuit-list" id="fc-list"></div>
-  </div>
-</div>
-
-<div class="card">
-  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.5rem;flex-wrap:wrap;gap:8px">
-    <h3 style="margin:0">Diagrama del tablero</h3>
-    <div>
-      <button type="button" class="tab-btn active" id="btn-panel" onclick="setView('panel')">Panel de breakers</button>
-      <button type="button" class="tab-btn" id="btn-single" onclick="setView('single')">Unifilar</button>
-      <button type="button" class="tab-btn" id="btn-export-pdf" onclick="window.print()" style="background: #1a1a1a; color: #ffffff; border-color: #1a1a1a; font-weight: 500;">🖨️ Exportar a PDF</button>
+  <header class="topbar">
+    <div class="app-icon">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 4 14h6l-1 8 9-12h-6l1-8z"/></svg>
     </div>
-  </div>
-
-  <div class="settings-row">
-    <label for="sys-type">Sistema</label>
-    <select id="sys-type" onchange="sysTypeChanged()">
-      <option value="3" selected>Trifásico (3 Fases)</option>
-      <option value="2">Monofásico (2 Fases - 110/220V)</option>
-    </select>
-
-    <label for="panel-size" style="margin-left:8px">Tamaño de panel</label>
-    <select id="panel-size" onchange="panelSizeChanged()">
-      <option value="12">12 espacios</option>
-      <option value="18">18 espacios</option>
-      <option value="24" selected>24 espacios</option>
-      <option value="30">30 espacios</option>
-      <option value="42">42 espacios</option>
-    </select>
-    <label for="main-amp" style="margin-left:8px">Interruptor principal</label>
-    <input id="main-amp" type="number" min="10" step="5" value="100" style="width:72px" onchange="mainAmpChanged()" />
-    <span style="font-size:12px;color:var(--color-text-secondary, #6b6b65)">A</span>
-  </div>
-
-  <div class="overflow-banner" id="overflow-banner" style="display:none"></div>
-
-  <div class="tips-box">
-    <span style="font-size:18px;">💡</span> 
-    <span><strong>Tip de acomodo:</strong> Arrastra circuitos desde la lista lateral hacia los espacios vacíos. Si sueltas uno sobre otro, el viejo será reemplazado. Haz <strong>DOBLE CLIC</strong> en cualquier circuito dentro del panel para mandarlo rápidamente a "Sin asignar".</span>
-  </div>
-
-  <div class="layout-container">
-    <div class="panel-wrap">
-      <svg id="diagram-svg" class="panel-svg" width="100%" viewBox="0 0 680 440"></svg>
+    <div class="topbar-titles">
+      <h1 id="main-title">Centro de carga trifásico</h1>
+      <p class="sub" id="main-sub">Circuitos monofásicos 110 V / 220 V y trifásicos 220 V con distribución física real de espacios por fase.</p>
     </div>
-    
-    <div class="unassigned-sidebar" id="unassigned-sidebar" ondragover="allowDropSidebar(event)" ondrop="dropUnassigned(event)" ondragenter="this.classList.add('drag-over')" ondragleave="this.classList.remove('drag-over')">
-      <h4 style="font-size:12px;margin-bottom:12px;color:var(--color-text-secondary);text-transform:uppercase;letter-spacing:0.05em;">Zona Sin Asignar</h4>
-      <div id="unassigned-list"></div>
-    </div>
-  </div>
+  </header>
 
-  <div style="display:flex;gap:16px;margin-top:.5rem;flex-wrap:wrap">
-    <span style="font-size:11px;color:var(--color-text-secondary, #6b6b65);display:flex;align-items:center;gap:4px"><span style="width:10px;height:10px;border-radius:2px;background:#B5D4F4;display:inline-block"></span> Fase A</span>
-    <span style="font-size:11px;color:var(--color-text-secondary, #6b6b65);display:flex;align-items:center;gap:4px"><span style="width:10px;height:10px;border-radius:2px;background:#C0DD97;display:inline-block"></span> Fase B</span>
-    <span id="legend-phase-c" style="font-size:11px;color:var(--color-text-secondary, #6b6b65);display:flex;align-items:center;gap:4px"><span style="width:10px;height:10px;border-radius:2px;background:#F5C4B3;display:inline-block"></span> Fase C</span>
-    <span style="font-size:11px;color:var(--color-text-secondary, #6b6b65)">┄ borde punteado = 220V monofásico (2 polos)</span>
-    <span style="font-size:11px;color:var(--color-text-secondary, #6b6b65)">▮ barra lateral = breaker de 2–3 polos</span>
-  </div>
-</div>
+  <div class="shell">
+    <aside class="sidebar">
+      <nav class="side-nav">
+        <button type="button" class="side-link active" data-sec="resumen" onclick="showSection('resumen',this)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 13h4v7H3zM10 8h4v12h-4zM17 4h4v16h-4z"/></svg>
+          Resumen
+        </button>
+        <button type="button" class="side-link" data-sec="diagrama" onclick="showSection('diagrama',this)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.2"/><rect x="14" y="3" width="7" height="7" rx="1.2"/><rect x="3" y="14" width="7" height="7" rx="1.2"/><rect x="14" y="14" width="7" height="7" rx="1.2"/></svg>
+          Diagrama
+        </button>
+        <button type="button" class="side-link" data-sec="circuitos" onclick="showSection('circuitos',this)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M4 12h16M4 18h10"/></svg>
+          Circuitos
+        </button>
+      </nav>
 
-<div class="card">
-  <h3 id="form-title">Agregar circuito</h3>
-  <div class="field-row">
-    <label>Nombre</label>
-    <input id="c-name" placeholder="Nombre del circuito" />
-  </div>
-  <div class="field-row">
-    <label>Corriente</label>
-    <input id="c-amp" type="number" placeholder="A" min="0.1" step="0.1" />
-    <label style="margin-left:8px">Tensión</label>
-    <select id="c-volt" onchange="voltChanged()">
-      <option value="110">110 V – monofásico</option>
-      <option value="220">220 V – bifásico</option>
-      <option value="3f" id="opt-3f">220 V – trifásico</option>
-    </select>
-  </div>
-  <div class="chip-row">
-    <button type="button" class="chip" onclick="pickAmp(15)">15A</button>
-    <button type="button" class="chip" onclick="pickAmp(20)">20A</button>
-    <button type="button" class="chip" onclick="pickAmp(25)">25A</button>
-    <button type="button" class="chip" onclick="pickAmp(30)">30A</button>
-    <button type="button" class="chip" onclick="pickAmp(40)">40A</button>
-    <button type="button" class="chip" onclick="pickAmp(50)">50A</button>
-    <button type="button" class="chip" onclick="pickAmp(60)">60A</button>
-    <button type="button" class="chip" onclick="pickAmp(80)">80A</button>
-    <button type="button" class="chip" onclick="pickAmp(100)">100A</button>
-  </div>
-  <div style="margin:10px 0 4px">
-    <div style="font-size:12px;color:var(--color-text-secondary, #6b6b65);margin-bottom:6px" id="phase-label">Fase</div>
-    <div class="phase-group" id="phase-group"></div>
-    <div class="hint" id="phase-hint"></div>
-  </div>
-  <div class="err-msg" id="add-err"></div>
-  <button type="button" class="add-btn" id="submit-btn" onclick="addCircuit()">+ Agregar</button>
-  <button type="button" class="cancel-btn" id="cancel-edit-btn" style="display:none" onclick="cancelEdit()">Cancelar edición</button>
-  <button type="button" class="suggest-btn" onclick="suggestBalance()">✦ Distribución óptima automática (Tetris + Ajuste Fino)</button>
-</div>
+      <div class="side-divider"></div>
 
-<div class="card">
-  <h3>Todos los circuitos</h3>
-  <table class="tbl">
-    <thead><tr><th>#</th><th>Circuito</th><th>Tensión</th><th>Polos</th><th>Corriente</th><th>Potencia</th><th>Fase(s)</th><th>Espacio</th><th></th></tr></thead>
-    <tbody id="circuit-tbody"></tbody>
-  </table>
-</div>
+      <div class="side-config">
+        <div class="side-config-header">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h0a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51h0a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v0a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+          Configuración
+        </div>
+        <div class="config-card">
+          <div class="config-row">
+            <label for="sys-type">Sistema</label>
+            <select id="sys-type" onchange="sysTypeChanged()">
+              <option value="3" selected>Trifásico (3 Fases)</option>
+              <option value="2">Monofásico (2 Fases - 110/220V)</option>
+            </select>
+          </div>
+          <div class="config-row">
+            <label for="panel-size">Tamaño de panel</label>
+            <select id="panel-size" onchange="panelSizeChanged()">
+              <option value="12">12 espacios</option>
+              <option value="18">18 espacios</option>
+              <option value="24" selected>24 espacios</option>
+              <option value="30">30 espacios</option>
+              <option value="42">42 espacios</option>
+            </select>
+          </div>
+          <div class="config-row">
+            <label for="main-amp">Interruptor principal</label>
+            <div class="num-wrap">
+              <input id="main-amp" type="number" min="10" step="5" value="100" onchange="mainAmpChanged()" />
+              <span class="unit">A</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <main class="content">
+
+      <!-- ===================== RESUMEN ===================== -->
+      <section id="section-resumen" class="panel active">
+        <div class="metrics">
+          <div class="metric"><div class="label">Potencia total (En panel)</div><div class="val" id="m-kw">0 kW</div></div>
+          <div class="metric"><div class="label">Capacidad usada</div><div class="val" id="m-cap">0%</div></div>
+          <div class="metric"><div class="label">Promedio por fase</div><div class="val" id="m-avg">0 A</div></div>
+          <div class="metric"><div class="label">Desbalance</div><div class="val" id="m-unbal">—</div></div>
+          <div class="metric"><div class="label">Estado</div><div class="val" id="m-status">—</div></div>
+        </div>
+
+        <div class="phase-bars" id="phase-bars-container">
+          <div class="phase-col phase-a">
+            <h3><span class="phase-dot"></span>Fase A</h3>
+            <div class="atotal" id="fa-a">0 A</div>
+            <div class="ptotal" id="fa-w">0 kW</div>
+            <div class="bar-wrap"><div class="bar" id="fa-bar" style="width:0%"></div></div>
+            <div class="circuit-list" id="fa-list"></div>
+          </div>
+          <div class="phase-col phase-b">
+            <h3><span class="phase-dot"></span>Fase B</h3>
+            <div class="atotal" id="fb-a">0 A</div>
+            <div class="ptotal" id="fb-w">0 kW</div>
+            <div class="bar-wrap"><div class="bar" id="fb-bar" style="width:0%"></div></div>
+            <div class="circuit-list" id="fb-list"></div>
+          </div>
+          <div class="phase-col phase-c">
+            <h3><span class="phase-dot"></span>Fase C</h3>
+            <div class="atotal" id="fc-a">0 A</div>
+            <div class="ptotal" id="fc-w">0 kW</div>
+            <div class="bar-wrap"><div class="bar" id="fc-bar" style="width:0%"></div></div>
+            <div class="circuit-list" id="fc-list"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===================== DIAGRAMA ===================== -->
+      <section id="section-diagrama" class="panel">
+        <div class="section-toolbar">
+          <div class="segmented" id="view-segmented">
+            <button type="button" class="seg-btn active" id="btn-panel" onclick="setView('panel')">Panel de breakers</button>
+            <button type="button" class="seg-btn" id="btn-single" onclick="setView('single')">Unifilar</button>
+          </div>
+          <button type="button" class="export-btn" id="btn-export-pdf" onclick="window.print()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9V2h12v7M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+            Exportar a PDF
+          </button>
+        </div>
+
+        <div class="overflow-banner" id="overflow-banner" style="display:none"></div>
+
+        <div class="tips-box">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6M10 22h4M12 2a7 7 0 0 0-4 12.7c.4.3.6.8.6 1.3v.5a1 1 0 0 0 1 1h4.8a1 1 0 0 0 1-1v-.5c0-.5.2-1 .6-1.3A7 7 0 0 0 12 2z"/></svg>
+          <span><strong>Tip de acomodo:</strong> arrastra circuitos desde la lista lateral hacia los espacios vacíos. Si sueltas uno sobre otro, el viejo será reemplazado. Doble clic en cualquier circuito del panel lo manda a "Sin asignar".</span>
+        </div>
+
+        <div class="layout-container">
+          <div class="panel-wrap">
+            <svg id="diagram-svg" class="panel-svg" width="100%" viewBox="0 0 680 440"></svg>
+          </div>
+
+          <div class="unassigned-sidebar" id="unassigned-sidebar" ondragover="allowDropSidebar(event)" ondrop="dropUnassigned(event)" ondragenter="this.classList.add('drag-over')" ondragleave="this.classList.remove('drag-over')">
+            <h4>Zona sin asignar</h4>
+            <div id="unassigned-list"></div>
+          </div>
+        </div>
+
+        <div class="legend-row">
+          <span class="legend-item"><span class="legend-swatch" style="background:#BFDDFF"></span>Fase A</span>
+          <span class="legend-item"><span class="legend-swatch" style="background:#C7F0D2"></span>Fase B</span>
+          <span class="legend-item" id="legend-phase-c"><span class="legend-swatch" style="background:#E6CCF5"></span>Fase C</span>
+          <span class="legend-item">┄ borde punteado = 220V monofásico (2 polos)</span>
+          <span class="legend-item">▮ barra lateral = breaker de 2–3 polos</span>
+        </div>
+      </section>
+
+      <!-- ===================== CIRCUITOS ===================== -->
+      <section id="section-circuitos" class="panel">
+        <div class="card form-card">
+          <h3 id="form-title">Agregar circuito</h3>
+
+          <div class="form-row">
+            <div class="field">
+              <label for="c-name">Nombre</label>
+              <input id="c-name" placeholder="Nombre del circuito" />
+            </div>
+            <div class="field">
+              <label for="c-amp">Corriente</label>
+              <input id="c-amp" type="number" placeholder="A" min="0.1" step="0.1" />
+            </div>
+            <div class="field">
+              <label for="c-volt">Tensión</label>
+              <select id="c-volt" onchange="voltChanged()">
+                <option value="110">110 V – monofásico</option>
+                <option value="220">220 V – bifásico</option>
+                <option value="3f" id="opt-3f">220 V – trifásico</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="chip-row">
+            <button type="button" class="chip" onclick="pickAmp(15)">15A</button>
+            <button type="button" class="chip" onclick="pickAmp(20)">20A</button>
+            <button type="button" class="chip" onclick="pickAmp(25)">25A</button>
+            <button type="button" class="chip" onclick="pickAmp(30)">30A</button>
+            <button type="button" class="chip" onclick="pickAmp(40)">40A</button>
+            <button type="button" class="chip" onclick="pickAmp(50)">50A</button>
+            <button type="button" class="chip" onclick="pickAmp(60)">60A</button>
+            <button type="button" class="chip" onclick="pickAmp(80)">80A</button>
+            <button type="button" class="chip" onclick="pickAmp(100)">100A</button>
+          </div>
+
+          <div class="phase-block">
+            <div class="field-label" id="phase-label">Fase</div>
+            <div class="phase-group segmented" id="phase-group"></div>
+            <div class="hint" id="phase-hint"></div>
+          </div>
+
+          <div class="err-msg" id="add-err"></div>
+
+          <div class="form-actions">
+            <button type="button" class="btn-primary" id="submit-btn" onclick="addCircuit()">+ Agregar</button>
+            <button type="button" class="btn-plain" id="cancel-edit-btn" style="display:none" onclick="cancelEdit()">Cancelar edición</button>
+          </div>
+
+          <button type="button" class="suggest-btn" onclick="suggestBalance()">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l1.6 4.8L18 8l-4.4 1.2L12 14l-1.6-4.8L6 8l4.4-1.2L12 2zM5 14l.9 2.7L8 17l-2.1.9L5 20l-.9-2.1L2 17l2.1-.3L5 14zM19 13l.9 2.7L22 16l-2.1.9L19 19l-.9-2.1L16 16l2.1-.3L19 13z"/></svg>
+            Distribución óptima automática
+          </button>
+        </div>
+
+        <div class="card table-card">
+          <h3>Todos los circuitos</h3>
+          <table class="tbl">
+            <thead><tr><th>#</th><th>Circuito</th><th>Tensión</th><th>Polos</th><th>Corriente</th><th>Potencia</th><th>Fase(s)</th><th>Espacio</th><th></th></tr></thead>
+            <tbody id="circuit-tbody"></tbody>
+          </table>
+        </div>
+      </section>
+
+    </main>
+  </div>
 </div>
 
 <script>
+function showSection(name, btn){
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.getElementById('section-'+name).classList.add('active');
+  document.querySelectorAll('.side-link').forEach(b=>b.classList.remove('active'));
+  if(btn) btn.classList.add('active');
+}
+
 const FP=0.85;
 const OPTS={"110":[{k:"A",l:"A"},{k:"B",l:"B"},{k:"C",l:"C"}],"220":[{k:"AB",l:"A–B"},{k:"BC",l:"B–C"},{k:"AC",l:"A–C"}],"3f":[{k:"ABC",l:"A·B·C"}]};
 let selPhase="A",selVolt="110",currentView="panel";
@@ -403,16 +799,16 @@ function phaseWatts(c){
 }
 
 function breakerColor(c){
-  if(c.volt==="3f") return {fill:"#FAEEDA",stroke:"#854F0B",text:"#633806"};
+  if(c.volt==="3f") return {fill:"#FFF1DC",stroke:"#FF9500",text:"#99570A"};
   if(c.volt==="220"){
-    if(c.phase==="AB") return {fill:"#E6F1FB",stroke:"#185FA5",text:"#0C447C",dash:true};
-    if(c.phase==="BC") return {fill:"#EAF3DE",stroke:"#3B6D11",text:"#27500A",dash:true};
-    if(c.phase==="AC") return {fill:"#FAECE7",stroke:"#993C1D",text:"#712B13",dash:true};
+    if(c.phase==="AB") return {fill:"#E8F1FE",stroke:"#007AFF",text:"#0040C7",dash:true};
+    if(c.phase==="BC") return {fill:"#E7F8EC",stroke:"#34C759",text:"#1B7A37",dash:true};
+    if(c.phase==="AC") return {fill:"#F3E8FC",stroke:"#AF52DE",text:"#6B2E9E",dash:true};
   }
-  if(c.phase==="A") return {fill:"#E6F1FB",stroke:"#185FA5",text:"#0C447C"};
-  if(c.phase==="B") return {fill:"#EAF3DE",stroke:"#3B6D11",text:"#27500A"};
-  if(c.phase==="C") return {fill:"#FAECE7",stroke:"#993C1D",text:"#712B13"};
-  return {fill:"#F1EFE8",stroke:"#5F5E5A",text:"#2C2C2A"};
+  if(c.phase==="A") return {fill:"#E8F1FE",stroke:"#007AFF",text:"#0040C7"};
+  if(c.phase==="B") return {fill:"#E7F8EC",stroke:"#34C759",text:"#1B7A37"};
+  if(c.phase==="C") return {fill:"#F3E8FC",stroke:"#AF52DE",text:"#6B2E9E"};
+  return {fill:"#F1EFEA",stroke:"#8E8E93",text:"#3A3A3C"};
 }
 
 function phaseLabel(c){return c.phase==="ABC"?"A·B·C":c.phase==="AB"?"A–B":c.phase==="BC"?"B–C":c.phase==="AC"?"A–C":c.phase;}
@@ -500,18 +896,18 @@ function drawPanel(){
 
   const titleText = sysType==="3" ? "TABLERO PRINCIPAL — " : "TABLERO MONOFÁSICO — ";
   let els=`
-  <rect x="15" y="15" width="${W-30}" height="${H-30}" rx="8" fill="none" stroke="var(--color-border-tertiary, #e5e3dd)" stroke-width="1"/>
-  <text x="${W/2}" y="32" text-anchor="middle" font-size="13" fill="var(--color-text-primary, #1a1a1a)" font-weight="500">${titleText}${panelSize} ESPACIOS</text>
+  <rect x="15" y="15" width="${W-30}" height="${H-30}" rx="10" fill="none" stroke="rgba(60,60,67,0.18)" stroke-width="1"/>
+  <text x="${W/2}" y="32" text-anchor="middle" font-size="13" fill="#1C1C1E" font-weight="600">${titleText}${panelSize} ESPACIOS</text>
 
-  <line x1="${busX.A}" y1="${TOP-20}" x2="${busX.A}" y2="${TOP+maxRows*ROW_H}" stroke="#185FA5" stroke-width="3"/>
-  <line x1="${busX.B}" y1="${TOP-20}" x2="${busX.B}" y2="${TOP+maxRows*ROW_H}" stroke="#3B6D11" stroke-width="3"/>
-  <text x="${busX.A}" y="${TOP-25}" text-anchor="middle" font-size="11" fill="#185FA5" font-weight="bold">A</text>
-  <text x="${busX.B}" y="${TOP-25}" text-anchor="middle" font-size="11" fill="#3B6D11" font-weight="bold">B</text>
+  <line x1="${busX.A}" y1="${TOP-20}" x2="${busX.A}" y2="${TOP+maxRows*ROW_H}" stroke="#007AFF" stroke-width="3"/>
+  <line x1="${busX.B}" y1="${TOP-20}" x2="${busX.B}" y2="${TOP+maxRows*ROW_H}" stroke="#34C759" stroke-width="3"/>
+  <text x="${busX.A}" y="${TOP-25}" text-anchor="middle" font-size="11" fill="#007AFF" font-weight="bold">A</text>
+  <text x="${busX.B}" y="${TOP-25}" text-anchor="middle" font-size="11" fill="#34C759" font-weight="bold">B</text>
   `;
 
   if(sysType==="3") {
-    els+=`<line x1="${busX.C}" y1="${TOP-20}" x2="${busX.C}" y2="${TOP+maxRows*ROW_H}" stroke="#993C1D" stroke-width="3"/>`;
-    els+=`<text x="${busX.C}" y="${TOP-25}" text-anchor="middle" font-size="11" fill="#993C1D" font-weight="bold">C</text>`;
+    els+=`<line x1="${busX.C}" y1="${TOP-20}" x2="${busX.C}" y2="${TOP+maxRows*ROW_H}" stroke="#AF52DE" stroke-width="3"/>`;
+    els+=`<text x="${busX.C}" y="${TOP-25}" text-anchor="middle" font-size="11" fill="#AF52DE" font-weight="bold">C</text>`;
   }
 
   for(let col=0; col<2; col++){
@@ -530,7 +926,7 @@ function drawPanel(){
         const lbl=slotLabel(col,row,p.poles);
 
         els+=`<g draggable="true" ondragstart="drag(event, ${c.id})" ondragover="allowDropSvg(event)" ondragleave="leaveSvg(event)" ondrop="dropSvg(event, ${col}, ${row})" ondblclick="moveToUnassigned(${c.id})" style="cursor:grab;">`;
-        els+=`<rect class="svg-drop-target" x="${x}" y="${boxY}" width="${BW}" height="${boxH}" rx="4" fill="${cl.fill}" stroke="${cl.stroke}" stroke-width="1.5"${cl.dash?' stroke-dasharray="5 3"':""} />`;
+        els+=`<rect class="svg-drop-target" x="${x}" y="${boxY}" width="${BW}" height="${boxH}" rx="6" fill="${cl.fill}" stroke="${cl.stroke}" stroke-width="1.5"${cl.dash?' stroke-dasharray="5 3"':""} />`;
 
         if(p.poles>1){
           const tieX=isLeft? x+BW-6 : x;
@@ -539,14 +935,14 @@ function drawPanel(){
 
         const maxChars=16;
         const name=c.name.length>maxChars?c.name.slice(0,maxChars-1)+"…":c.name;
-        els+=`<text pointer-events="none" x="${x+8}" y="${boxY+16}" font-size="10" font-weight="500" fill="var(--color-text-primary, #1a1a1a)">${lbl}. ${name}</text>`;
-        els+=`<text pointer-events="none" x="${x+8}" y="${boxY+30}" font-size="9" fill="var(--color-text-secondary, #6b6b65)">${c.amp}A | ${phaseLabel(c)}</text>`;
+        els+=`<text pointer-events="none" x="${x+8}" y="${boxY+16}" font-size="10" font-weight="600" fill="#1C1C1E">${lbl}. ${name}</text>`;
+        els+=`<text pointer-events="none" x="${x+8}" y="${boxY+30}" font-size="9" fill="#6E6E73">${c.amp}A | ${phaseLabel(c)}</text>`;
         
         for(let k=0;k<p.poles;k++){
           const ph=rowPhase(row+k);
           const cy=boxY+k*ROW_H+19;
-          els+=`<line pointer-events="none" x1="${startX}" y1="${cy}" x2="${busX[ph]}" y2="${cy}" stroke="var(--color-text-primary, #1a1a1a)" stroke-width="1.2"/>`;
-          els+=`<circle pointer-events="none" cx="${busX[ph]}" cy="${cy}" r="3" fill="var(--color-text-primary, #1a1a1a)"/>`;
+          els+=`<line pointer-events="none" x1="${startX}" y1="${cy}" x2="${busX[ph]}" y2="${cy}" stroke="#1C1C1E" stroke-width="1.2"/>`;
+          els+=`<circle pointer-events="none" cx="${busX[ph]}" cy="${cy}" r="3" fill="#1C1C1E"/>`;
         }
         els+=`</g>`;
         
@@ -555,8 +951,8 @@ function drawPanel(){
         const ph=rowPhase(row);
         const lbl=slotLabel(col,row,1);
         els+=`<g ondragover="allowDropSvg(event)" ondragleave="leaveSvg(event)" ondrop="dropSvg(event, ${col}, ${row})" style="cursor:pointer;">`;
-        els+=`<rect class="svg-drop-target" x="${x}" y="${y}" width="${BW}" height="38" rx="4" fill="var(--color-background-secondary, #f4f3f1)" stroke="var(--color-border-secondary, #d8d6d0)" stroke-width="0.5" stroke-dasharray="3 3" opacity="0.6" />`;
-        els+=`<text pointer-events="none" x="${x+BW/2}" y="${y+22}" text-anchor="middle" font-size="10" fill="var(--color-text-secondary, #6b6b65)">${lbl}. Reserva (Fase ${ph})</text>`;
+        els+=`<rect class="svg-drop-target" x="${x}" y="${y}" width="${BW}" height="38" rx="6" fill="#F6F6F9" stroke="rgba(60,60,67,0.2)" stroke-width="0.5" stroke-dasharray="3 3" opacity="0.8" />`;
+        els+=`<text pointer-events="none" x="${x+BW/2}" y="${y+22}" text-anchor="middle" font-size="10" fill="#AEAEB2">${lbl}. Reserva (Fase ${ph})</text>`;
         els+=`</g>`;
       }
     }
@@ -577,18 +973,18 @@ function drawSingleLine(){
   const xC=560;
 
   let els=`
-  <rect x="15" y="15" width="${W-30}" height="${H-30}" rx="8" fill="none" stroke="var(--color-border-tertiary, #e5e3dd)" stroke-width="1"/>
-  <text x="${W/2}" y="38" text-anchor="middle" font-size="12" fill="var(--color-text-primary, #1a1a1a)" font-weight="500">DIAGRAMA UNIFILAR DE DISTRIBUCIÓN</text>
+  <rect x="15" y="15" width="${W-30}" height="${H-30}" rx="10" fill="none" stroke="rgba(60,60,67,0.18)" stroke-width="1"/>
+  <text x="${W/2}" y="38" text-anchor="middle" font-size="12" fill="#1C1C1E" font-weight="600">DIAGRAMA UNIFILAR DE DISTRIBUCIÓN</text>
 
-  <line x1="${xA}" y1="${BUS_Y}" x2="${xA}" y2="${CKT_TOP+n*CKT_H}" stroke="#185FA5" stroke-width="2" opacity="0.4"/>
-  <line x1="${xB}" y1="${BUS_Y}" x2="${xB}" y2="${CKT_TOP+n*CKT_H}" stroke="#3B6D11" stroke-width="2" opacity="0.4"/>
-  <text x="${xA}" y="${BUS_Y-8}" text-anchor="middle" font-size="11" fill="#185FA5" font-weight="bold">Barra A</text>
-  <text x="${xB}" y="${BUS_Y-8}" text-anchor="middle" font-size="11" fill="#3B6D11" font-weight="bold">Barra B</text>
+  <line x1="${xA}" y1="${BUS_Y}" x2="${xA}" y2="${CKT_TOP+n*CKT_H}" stroke="#007AFF" stroke-width="2" opacity="0.4"/>
+  <line x1="${xB}" y1="${BUS_Y}" x2="${xB}" y2="${CKT_TOP+n*CKT_H}" stroke="#34C759" stroke-width="2" opacity="0.4"/>
+  <text x="${xA}" y="${BUS_Y-8}" text-anchor="middle" font-size="11" fill="#007AFF" font-weight="bold">Barra A</text>
+  <text x="${xB}" y="${BUS_Y-8}" text-anchor="middle" font-size="11" fill="#34C759" font-weight="bold">Barra B</text>
   `;
 
   if(sysType==="3") {
-    els+=`<line x1="${xC}" y1="${BUS_Y}" x2="${xC}" y2="${CKT_TOP+n*CKT_H}" stroke="#993C1D" stroke-width="2" opacity="0.4"/>`;
-    els+=`<text x="${xC}" y="${BUS_Y-8}" text-anchor="middle" font-size="11" fill="#993C1D" font-weight="bold">Barra C</text>`;
+    els+=`<line x1="${xC}" y1="${BUS_Y}" x2="${xC}" y2="${CKT_TOP+n*CKT_H}" stroke="#AF52DE" stroke-width="2" opacity="0.4"/>`;
+    els+=`<text x="${xC}" y="${BUS_Y-8}" text-anchor="middle" font-size="11" fill="#AF52DE" font-weight="bold">Barra C</text>`;
   }
 
   activeC.forEach((c,i)=>{
@@ -598,15 +994,15 @@ function drawSingleLine(){
     const pa=phaseAmps(c);
     const LOAD_X=W-160;
 
-    if(pa.A>0) els+=`<circle cx="${xA}" cy="${mid}" r="3.5" fill="#185FA5"/><line x1="${xA}" y1="${mid}" x2="${LOAD_X}" y2="${mid}" stroke="var(--color-text-primary, #1a1a1a)" stroke-width="1"/>`;
-    if(pa.B>0) els+=`<circle cx="${xB}" cy="${mid}" r="3.5" fill="#3B6D11"/><line x1="${xB}" y1="${mid}" x2="${LOAD_X}" y2="${mid}" stroke="var(--color-text-primary, #1a1a1a)" stroke-width="1"/>`;
-    if(pa.C>0 && sysType==="3") els+=`<circle cx="${xC}" cy="${mid}" r="3.5" fill="#993C1D"/><line x1="${xC}" y1="${mid}" x2="${LOAD_X}" y2="${mid}" stroke="var(--color-text-primary, #1a1a1a)" stroke-width="1"/>`;
+    if(pa.A>0) els+=`<circle cx="${xA}" cy="${mid}" r="3.5" fill="#007AFF"/><line x1="${xA}" y1="${mid}" x2="${LOAD_X}" y2="${mid}" stroke="#1C1C1E" stroke-width="1"/>`;
+    if(pa.B>0) els+=`<circle cx="${xB}" cy="${mid}" r="3.5" fill="#34C759"/><line x1="${xB}" y1="${mid}" x2="${LOAD_X}" y2="${mid}" stroke="#1C1C1E" stroke-width="1"/>`;
+    if(pa.C>0 && sysType==="3") els+=`<circle cx="${xC}" cy="${mid}" r="3.5" fill="#AF52DE"/><line x1="${xC}" y1="${mid}" x2="${LOAD_X}" y2="${mid}" stroke="#1C1C1E" stroke-width="1"/>`;
 
     const symX = LOAD_X - 40;
-    els += `<path d="M ${symX+10} ${mid} A 6 6 0 0 0 ${symX+22} ${mid}" fill="none" stroke="var(--color-text-primary, #1a1a1a)" stroke-width="1.5"/>`;
+    els += `<path d="M ${symX+10} ${mid} A 6 6 0 0 0 ${symX+22} ${mid}" fill="none" stroke="#1C1C1E" stroke-width="1.5"/>`;
 
-    els+=`<rect x="${LOAD_X}" y="${mid-12}" width="110" height="24" rx="3" fill="${cl.fill}" stroke="${cl.stroke}" stroke-width="1"/>`;
-    els+=`<text x="${LOAD_X+55}" y="${mid+4}" text-anchor="middle" font-size="9" font-weight="500" fill="${cl.text}">${c.name.slice(0,16)}</text>`;
+    els+=`<rect x="${LOAD_X}" y="${mid-12}" width="110" height="24" rx="5" fill="${cl.fill}" stroke="${cl.stroke}" stroke-width="1"/>`;
+    els+=`<text x="${LOAD_X+55}" y="${mid+4}" text-anchor="middle" font-size="9" font-weight="600" fill="${cl.text}">${c.name.slice(0,16)}</text>`;
   });
   svg.innerHTML=els;
 }
@@ -709,6 +1105,7 @@ function editCircuit(id){
   document.getElementById("submit-btn").textContent="💾 Guardar cambios";
   document.getElementById("cancel-edit-btn").style.display="inline-block";
   document.getElementById("add-err").textContent="";
+  showSection('circuitos', document.querySelector('.side-link[data-sec="circuitos"]'));
 }
 
 function cancelEdit(){
@@ -939,7 +1336,7 @@ function render(){
         <div class="u-item-title">${c.name}</div>
         <div class="u-item-meta">
           <span class="badge ${badgeClass(c.volt)}">${voltLabel(c)}</span>
-          <span style="font-weight:500;">${c.amp} A</span>
+          <span style="font-weight:600;">${c.amp} A</span>
         </div>
       </div>
     `;
@@ -947,8 +1344,8 @@ function render(){
 
   const overflowEl=document.getElementById("overflow-banner");
   if(lastLayout.overflow.length){
-    overflowEl.style.display="block";
-    overflowEl.textContent=`⚠ Tienes ${lastLayout.overflow.length} circuito(s) en la zona de "Sin asignar" que no han sido contados en la carga del panel.`;
+    overflowEl.style.display="flex";
+    overflowEl.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4M12 17h.01"/></svg><span>Tienes ${lastLayout.overflow.length} circuito(s) en la zona de "Sin asignar" que no han sido contados en la carga del panel.</span>`;
   } else {
     overflowEl.style.display="none";
   }
@@ -975,4 +1372,5 @@ function render(){
 buildPhaseUI("110",null);
 render();
 </script>
-</body></html>
+</body>
+</html>
