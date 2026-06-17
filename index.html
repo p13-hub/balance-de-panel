@@ -1,4 +1,4 @@
-<style>
+<html><head><style>
 *{box-sizing:border-box;margin:0;padding:0}
 .wrap{padding:1rem 0; font-family: var(--font-sans, system-ui, -apple-system, "Segoe UI", sans-serif);}
 h2{font-size:18px;font-weight:500;color:var(--color-text-primary, #1a1a1a);margin-bottom:4px}
@@ -64,7 +64,7 @@ input,select{padding:6px 10px;font-size:13px;border:0.5px solid var(--color-bord
 .tab-btn.active{background:var(--color-background-primary, #ffffff);color:var(--color-text-primary, #1a1a1a);font-weight:500;border-color:var(--color-border-primary, #1a1a1a)}
 </style>
 
-<div class="wrap">
+</head><body><div class="wrap">
 <h2>Centro de carga trifásico</h2>
 <p class="sub">Circuitos monofásicos 110 V / 220 V y trifásicos 220 V con distribución física real de espacios por fase.</p>
 
@@ -114,12 +114,12 @@ input,select{padding:6px 10px;font-size:13px;border:0.5px solid var(--color-bord
     <select id="panel-size" onchange="panelSizeChanged()">
       <option value="12">12 espacios</option>
       <option value="18">18 espacios</option>
-      <option value="24" selected>24 espacios</option>
+      <option value="24" selected="">24 espacios</option>
       <option value="30">30 espacios</option>
       <option value="42">42 espacios</option>
     </select>
     <label for="main-amp" style="margin-left:8px">Interruptor principal</label>
-    <input id="main-amp" type="number" min="10" step="5" value="100" style="width:72px" onchange="mainAmpChanged()" />
+    <input id="main-amp" type="number" min="10" step="5" value="100" style="width:72px" onchange="mainAmpChanged()">
     <span style="font-size:12px;color:var(--color-text-secondary, #6b6b65)">A</span>
   </div>
 
@@ -141,11 +141,11 @@ input,select{padding:6px 10px;font-size:13px;border:0.5px solid var(--color-bord
   <h3 id="form-title">Agregar circuito</h3>
   <div class="field-row">
     <label>Nombre</label>
-    <input id="c-name" placeholder="Nombre del circuito" />
+    <input id="c-name" placeholder="Nombre del circuito">
   </div>
   <div class="field-row">
     <label>Corriente</label>
-    <input id="c-amp" type="number" placeholder="A" min="0.1" step="0.1" />
+    <input id="c-amp" type="number" placeholder="A" min="0.1" step="0.1">
     <label style="margin-left:8px">Tensión</label>
     <select id="c-volt" onchange="voltChanged()">
       <option value="110">110 V – monofásico</option>
@@ -191,16 +191,29 @@ let selPhase="A",selVolt="110",currentView="panel";
 let panelSize=24, mainAmp=100, editingId=null;
 let lastLayout={placements:[],overflow:[],cols:[new Set(),new Set()]};
 
+// --- Mantuve tu listado original intacto ---
 let circuits=[
-  {id:1,name:"Iluminación piso 1",amp:15,volt:"110",phase:"A"},
-  {id:2,name:"Tomacorrientes oficina",amp:20,volt:"110",phase:"B"},
-  {id:3,name:"Compresor",amp:30,volt:"3f",phase:"ABC"},
-  {id:4,name:"Iluminación piso 2",amp:12,volt:"110",phase:"B"},
-  {id:5,name:"Aire acondicionado",amp:20,volt:"220",phase:"AB"},
-  {id:6,name:"Bomba hidráulica",amp:25,volt:"3f",phase:"ABC"},
-  {id:7,name:"Tomacorrientes bodega",amp:15,volt:"110",phase:"C"},
+  {id:8,name:"Almacen",amp:0.0,volt:"110",phase:"C"},
+  {id:9,name:"Contacto Petanca",amp:4.1,volt:"110",phase:"C"},
+  {id:10,name:"Ilum Baños",amp:0.0,volt:"110",phase:"C"},
+  {id:11,name:"Ilum Cocina",amp:0.1,volt:"110",phase:"C"},
+  {id:12,name:"Contacto hielo",amp:4.9,volt:"110",phase:"C"},
+  {id:13,name:"Contacto Barra Cocina",amp:0.1,volt:"110",phase:"C"},
+  {id:14,name:"Contrabarra Cocina",amp:12.2,volt:"110",phase:"C"},
+  {id:15,name:"Ilum. Comedor",amp:4.2,volt:"110",phase:"C"},
+  {id:16,name:"Contactos Almacen",amp:4.6,volt:"110",phase:"C"},
+  {id:17,name:"Barra licores",amp:1.2,volt:"110",phase:"B"},
+  {id:18,name:"Contrabarra Licores",amp:3.5,volt:"110",phase:"C"},
+  {id:19,name:"Contacto Almacen",amp:0.6,volt:"110",phase:"B"},
+  {id:20,name:"A/C comedor",amp:14.6,volt:"220",phase:"BC"},
+  {id:21,name:"Mueble almacen",amp:5.6,volt:"110",phase:"C"},
+  {id:22,name:"Inyector Aire",amp:4.5,volt:"220",phase:"AC"},
+  {id:23,name:"CC aires",amp:62.0,volt:"220",phase:"AB"},
+  {id:24,name:"Extractor",amp:7.3,volt:"220",phase:"AC"},
+  {id:25,name:"A/C almacen",amp:5.4,volt:"220",phase:"AC"},
+  {id:26,name:"Cooler baños",amp:7.0,volt:"110",phase:"C"}
 ];
-let nextId=8;
+let nextId=27;
 
 function phaseAmps(c){
   const a=c.amp;
@@ -233,28 +246,18 @@ function breakerColor(c){
 
 function phaseLabel(c){return c.phase==="ABC"?"A·B·C":c.phase==="AB"?"A–B":c.phase==="BC"?"B–C":c.phase==="AC"?"A–C":c.phase;}
 
-// ---- Lógica de slots físicos -------------------------------------------
-// En un panel real, cada fila del riel está cableada a una fase fija
-// (A, B, C, A, B, C...) y un breaker se conecta a la(s) fase(s) que le
-// tocan según el espacio físico donde se instala — no según una elección
-// libre del usuario. Un breaker de 1 polo ocupa 1 espacio, uno de 2 polos
-// (220V monofásico) ocupa 2 espacios consecutivos del mismo lado, y uno
-// de 3 polos (220V trifásico) ocupa 3 espacios consecutivos.
 function poleCount(c){ return c.volt==="3f"?3:c.volt==="220"?2:1; }
 function rowPhase(row){ return ["A","B","C"][row%3]; }
 function requiredStartMod(c){
   if(c.volt==="110") return {A:0,B:1,C:2}[c.phase];
   if(c.volt==="220") return {AB:0,BC:1,AC:2}[c.phase];
-  return null; // trifásico: cualquier inicio cubre A·B·C
+  return null; 
 }
 function slotLabel(col,startRow,poles){
   const nums=[];
   for(let k=0;k<poles;k++) nums.push((startRow+k)*2+col+1);
   return nums.join("-");
 }
-// Coloca cada circuito en el primer espacio físico disponible cuya(s)
-// fase(s) coincidan con lo que el circuito necesita. Si no encuentra
-// espacio (panel demasiado pequeño o fragmentado), lo manda a "overflow".
 function computeLayout(list,maxRows){
   const cols=[new Set(),new Set()];
   const placements=[];
@@ -356,10 +359,7 @@ function drawPanel(){
 
 function drawSingleLine(){
   const svg=document.getElementById("diagram-svg");
-  const W=680;
-  const BUS_Y=100;
-  const CKT_TOP=150;
-  const CKT_H=46;
+  const W=680, BUS_Y=100, CKT_TOP=150, CKT_H=46;
   const n=circuits.length;
   const H=CKT_TOP+n*CKT_H+40;
   svg.setAttribute("viewBox",`0 0 ${W} ${H}`);
@@ -523,34 +523,68 @@ function mainAmpChanged(){
   render();
 }
 
-// Heurística "longest processing time": ordena de mayor a menor corriente
-// y asigna cada circuito monofásico (110V o el par de fases de 220V) a la
-// combinación que minimice el desbalance resultante. Los trifásicos no
-// se tocan porque siempre cargan las 3 fases por igual.
+// ==== NUEVA LÓGICA DE BALANCEO INTELIGENTE (RESPETA ESPACIOS) ====
 function suggestBalance(){
   const load={A:0,B:0,C:0};
-  circuits.filter(c=>c.volt==="3f").forEach(c=>{ load.A+=c.amp; load.B+=c.amp; load.C+=c.amp; });
+  const fixed = circuits.filter(c=>c.volt==="3f");
+  fixed.forEach(c=>{ load.A+=c.amp; load.B+=c.amp; load.C+=c.amp; });
 
-  const candidates=circuits.filter(c=>c.volt!=="3f").sort((a,b)=>b.amp-a.amp);
+  const candidates = circuits.filter(c=>c.volt!=="3f").sort((a,b)=>b.amp-a.amp);
+  let optimizedSoFar = [...fixed];
+  const maxRows = Math.max(Math.ceil(panelSize/2), 6);
 
   candidates.forEach(c=>{
-    if(c.volt==="110"){
-      const best=["A","B","C"].reduce((a,b)=>load[a]<=load[b]?a:b);
-      c.phase=best;
-      load[best]+=c.amp;
-    } else {
-      const pairs=[["A","B"],["B","C"],["A","C"]];
-      let bestPair=pairs[0], bestSpread=Infinity;
-      pairs.forEach(([p1,p2])=>{
-        const sim={...load}; sim[p1]+=c.amp; sim[p2]+=c.amp;
-        const spread=Math.max(sim.A,sim.B,sim.C)-Math.min(sim.A,sim.B,sim.C);
-        if(spread<bestSpread){ bestSpread=spread; bestPair=[p1,p2]; }
+    let bestPhase = null;
+    let bestSpread = Infinity;
+    const opts = c.volt==="110" ? ["A","B","C"] : ["AB","BC","AC"];
+
+    opts.forEach(testPhase => {
+      c.phase = testPhase;
+      // Simulamos físicamente con los circuitos ya optimizados hasta ahora, respetando el ID original
+      const testGroup = [...optimizedSoFar, c].sort((a,b) => circuits.indexOf(a) - circuits.indexOf(b));
+      const simLayout = computeLayout(testGroup, maxRows);
+      
+      // Checamos si esta fase genera overflow para este circuito
+      const fits = !simLayout.overflow.some(x => x.id === c.id);
+
+      if(fits) {
+        let simA = load.A, simB = load.B, simC = load.C;
+        if(testPhase.includes("A")) simA += c.amp;
+        if(testPhase.includes("B")) simB += c.amp;
+        if(testPhase.includes("C")) simC += c.amp;
+        const spread = Math.max(simA,simB,simC) - Math.min(simA,simB,simC);
+        
+        if(spread < bestSpread){
+          bestSpread = spread;
+          bestPhase = testPhase;
+        }
+      }
+    });
+
+    // Fallback: Si el tablero ya está tan lleno que no cabe en ninguna configuración física, 
+    // balancea ignorando los rieles (inevitablemente se irá a overflow, pero no arruinará el promedio global)
+    if(bestPhase === null){
+      opts.forEach(testPhase => {
+        let simA = load.A, simB = load.B, simC = load.C;
+        if(testPhase.includes("A")) simA += c.amp;
+        if(testPhase.includes("B")) simB += c.amp;
+        if(testPhase.includes("C")) simC += c.amp;
+        const spread = Math.max(simA,simB,simC) - Math.min(simA,simB,simC);
+        if(spread < bestSpread){
+          bestSpread = spread;
+          bestPhase = testPhase;
+        }
       });
-      const label=(bestPair.includes("A")&&bestPair.includes("B"))?"AB":(bestPair.includes("B")&&bestPair.includes("C"))?"BC":"AC";
-      c.phase=label;
-      load[bestPair[0]]+=c.amp; load[bestPair[1]]+=c.amp;
     }
+
+    c.phase = bestPhase;
+    if(bestPhase.includes("A")) load.A += c.amp;
+    if(bestPhase.includes("B")) load.B += c.amp;
+    if(bestPhase.includes("C")) load.C += c.amp;
+    
+    optimizedSoFar.push(c);
   });
+  
   render();
 }
 
@@ -637,3 +671,4 @@ function render(){
 buildPhaseUI("110",null);
 render();
 </script>
+</body></html>
