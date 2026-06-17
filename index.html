@@ -1,0 +1,639 @@
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+.wrap{padding:1rem 0; font-family: var(--font-sans, system-ui, -apple-system, "Segoe UI", sans-serif);}
+h2{font-size:18px;font-weight:500;color:var(--color-text-primary, #1a1a1a);margin-bottom:4px}
+.sub{font-size:13px;color:var(--color-text-secondary, #6b6b65);margin-bottom:1.5rem}
+.metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-bottom:1.5rem}
+.metric{background:var(--color-background-secondary, #f4f3f1);border-radius:var(--border-radius-md, 8px);padding:.85rem 1rem}
+.metric .label{font-size:12px;color:var(--color-text-secondary, #6b6b65);margin-bottom:4px}
+.metric .val{font-size:20px;font-weight:500;color:var(--color-text-primary, #1a1a1a)}
+.metric .val.ok{color:#2D7A3A}.metric .val.warn{color:#B87D00}.metric .val.bad{color:#A32D2D}
+.phase-bars{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:1.5rem}
+.phase-col{background:var(--color-background-primary, #ffffff);border:0.5px solid var(--color-border-tertiary, #e5e3dd);border-radius:var(--border-radius-lg, 12px);padding:1rem}
+.phase-col h3{font-size:12px;font-weight:500;color:var(--color-text-secondary, #6b6b65);letter-spacing:.05em;text-transform:uppercase;margin-bottom:.5rem}
+.phase-col .atotal{font-size:20px;font-weight:500;color:var(--color-text-primary, #1a1a1a);margin-bottom:.15rem}
+.phase-col .ptotal{font-size:12px;color:var(--color-text-secondary, #6b6b65);margin-bottom:.5rem}
+.bar-wrap{height:6px;background:var(--color-background-secondary, #f4f3f1);border-radius:99px;margin-bottom:.75rem}
+.bar{height:100%;border-radius:99px;transition:width .4s ease}
+.phase-a .bar{background:#185FA5}.phase-b .bar{background:#3B6D11}.phase-c .bar{background:#993C1D}
+.circuit-list{display:flex;flex-direction:column;gap:5px}
+.circuit-row{display:flex;align-items:center;gap:6px;font-size:12px}
+.circuit-row .cname{color:var(--color-text-secondary, #6b6b65);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.circuit-row .camp{color:var(--color-text-primary, #1a1a1a);font-weight:500;min-width:38px;text-align:right}
+.badge{font-size:10px;padding:1px 6px;border-radius:99px;font-weight:500;white-space:nowrap}
+.b-110{background:#E6F1FB;color:#0C447C}.b-220{background:#EAF3DE;color:#27500A}.b-3f{background:#FAEEDA;color:#633806}
+.card{background:var(--color-background-primary, #ffffff);border:0.5px solid var(--color-border-tertiary, #e5e3dd);border-radius:var(--border-radius-lg, 12px);padding:1rem 1.25rem;margin-bottom:1rem}
+.card h3{font-size:12px;font-weight:500;color:var(--color-text-secondary, #6b6b65);letter-spacing:.05em;text-transform:uppercase;margin-bottom:.75rem}
+.field-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:10px}
+.field-row label{font-size:12px;color:var(--color-text-secondary, #6b6b65);min-width:60px}
+input,select{padding:6px 10px;font-size:13px;border:0.5px solid var(--color-border-secondary, #d8d6d0);border-radius:var(--border-radius-md, 8px);background:var(--color-background-primary, #ffffff);color:var(--color-text-primary, #1a1a1a)}
+#c-name{width:180px}
+#c-amp{width:76px}
+.phase-group{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.ph-btn{padding:4px 12px;font-size:12px;border-radius:99px;border:0.5px solid var(--color-border-secondary, #d8d6d0);cursor:pointer;background:var(--color-background-secondary, #f4f3f1);color:var(--color-text-secondary, #6b6b65);transition:all .15s;user-select:none}
+.ph-btn.sel-A{background:#E6F1FB;border-color:#185FA5;color:#185FA5;font-weight:500}
+.ph-btn.sel-B{background:#EAF3DE;border-color:#3B6D11;color:#3B6D11;font-weight:500}
+.ph-btn.sel-C{background:#FAECE7;border-color:#993C1D;color:#993C1D;font-weight:500}
+.ph-btn.sel-AB,.ph-btn.sel-BC,.ph-btn.sel-AC,.ph-btn.sel-ABC{background:#FAEEDA;border-color:#854F0B;color:#854F0B;font-weight:500}
+.hint{font-size:11px;color:var(--color-text-secondary, #6b6b65);margin-top:6px;min-height:14px}
+.err-msg{font-size:12px;color:#A32D2D;margin-top:6px;min-height:14px}
+.add-btn{padding:6px 14px;font-size:13px;border-radius:var(--border-radius-md, 8px);cursor:pointer;border:0.5px solid var(--color-border-secondary, #d8d6d0);background:var(--color-background-primary, #ffffff);color:var(--color-text-primary, #1a1a1a);margin-top:4px}
+.add-btn:hover{background:var(--color-background-secondary, #f4f3f1)}
+.cancel-btn{padding:6px 14px;font-size:13px;border-radius:var(--border-radius-md, 8px);cursor:pointer;border:0.5px solid var(--color-border-secondary, #d8d6d0);background:transparent;color:var(--color-text-secondary, #6b6b65);margin-top:4px;margin-left:6px}
+.cancel-btn:hover{background:var(--color-background-secondary, #f4f3f1)}
+.suggest-btn{margin-top:.75rem;font-size:12px;padding:5px 14px;border-radius:99px;border:0.5px solid var(--color-border-secondary, #d8d6d0);background:var(--color-background-secondary, #f4f3f1);color:var(--color-text-secondary, #6b6b65);cursor:pointer}
+.suggest-btn:hover{background:var(--color-background-tertiary, #ebe9e4)}
+.chip-row{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.chip{padding:3px 10px;font-size:11px;border-radius:99px;border:0.5px solid var(--color-border-secondary, #d8d6d0);background:var(--color-background-secondary, #f4f3f1);color:var(--color-text-secondary, #6b6b65);cursor:pointer}
+.chip:hover{background:var(--color-background-tertiary, #ebe9e4)}
+.settings-row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:.75rem 0}
+.settings-row label{font-size:12px;color:var(--color-text-secondary, #6b6b65)}
+.overflow-banner{background:#FAECE7;border:0.5px solid #993C1D;color:#712B13;border-radius:var(--border-radius-md, 8px);padding:.6rem .85rem;font-size:12px;margin-bottom:.75rem;line-height:1.4}
+.note{font-size:11px;color:var(--color-text-secondary, #6b6b65);margin-top:.5rem}
+.tbl{width:100%;border-collapse:collapse;font-size:12px}
+.tbl th{text-align:left;color:var(--color-text-secondary, #6b6b65);font-weight:400;border-bottom:0.5px solid var(--color-border-tertiary, #e5e3dd);padding:5px 6px}
+.tbl td{padding:5px 6px;color:var(--color-text-primary, #1a1a1a);border-bottom:0.5px solid var(--color-border-tertiary, #e5e3dd)}
+.tbl td.pa{color:#185FA5;font-weight:500}.tbl td.pb{color:#3B6D11;font-weight:500}.tbl td.pc{color:#993C1D;font-weight:500}.tbl td.p3f{color:#854F0B;font-weight:500}
+.overflow-flag{color:#A32D2D;font-size:10px;font-weight:600}
+.del,.edit{cursor:pointer;color:var(--color-text-secondary, #6b6b65);border:none;background:transparent;font-size:14px;padding:0 4px}
+.del:hover{color:#A32D2D}
+.edit:hover{color:var(--color-text-primary, #1a1a1a)}
+.panel-wrap{overflow-x:auto;margin-bottom:.5rem}
+.panel-svg{display:block}
+.tab-btn{padding:5px 14px;font-size:12px;border-radius:99px;border:0.5px solid var(--color-border-secondary, #d8d6d0);cursor:pointer;background:var(--color-background-secondary, #f4f3f1);color:var(--color-text-secondary, #6b6b65);margin-right:6px}
+.tab-btn.active{background:var(--color-background-primary, #ffffff);color:var(--color-text-primary, #1a1a1a);font-weight:500;border-color:var(--color-border-primary, #1a1a1a)}
+</style>
+
+<div class="wrap">
+<h2>Centro de carga trifásico</h2>
+<p class="sub">Circuitos monofásicos 110 V / 220 V y trifásicos 220 V con distribución física real de espacios por fase.</p>
+
+<div class="metrics">
+  <div class="metric"><div class="label">Potencia total</div><div class="val" id="m-kw">0 kW</div></div>
+  <div class="metric"><div class="label">Capacidad usada</div><div class="val" id="m-cap">0%</div></div>
+  <div class="metric"><div class="label">Promedio por fase</div><div class="val" id="m-avg">0 A</div></div>
+  <div class="metric"><div class="label">Desbalance</div><div class="val" id="m-unbal">—</div></div>
+  <div class="metric"><div class="label">Estado</div><div class="val" id="m-status">—</div></div>
+</div>
+
+<div class="phase-bars">
+  <div class="phase-col phase-a">
+    <h3>Fase A</h3>
+    <div class="atotal" id="fa-a">0 A</div>
+    <div class="ptotal" id="fa-w">0 kW</div>
+    <div class="bar-wrap"><div class="bar" id="fa-bar" style="width:0%"></div></div>
+    <div class="circuit-list" id="fa-list"></div>
+  </div>
+  <div class="phase-col phase-b">
+    <h3>Fase B</h3>
+    <div class="atotal" id="fb-a">0 A</div>
+    <div class="ptotal" id="fb-w">0 kW</div>
+    <div class="bar-wrap"><div class="bar" id="fb-bar" style="width:0%"></div></div>
+    <div class="circuit-list" id="fb-list"></div>
+  </div>
+  <div class="phase-col phase-c">
+    <h3>Fase C</h3>
+    <div class="atotal" id="fc-a">0 A</div>
+    <div class="ptotal" id="fc-w">0 kW</div>
+    <div class="bar-wrap"><div class="bar" id="fc-bar" style="width:0%"></div></div>
+    <div class="circuit-list" id="fc-list"></div>
+  </div>
+</div>
+
+<div class="card">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.5rem;flex-wrap:wrap;gap:8px">
+    <h3 style="margin:0">Diagrama del tablero</h3>
+    <div>
+      <button type="button" class="tab-btn active" id="btn-panel" onclick="setView('panel')">Panel de breakers</button>
+      <button type="button" class="tab-btn" id="btn-single" onclick="setView('single')">Unifilar</button>
+    </div>
+  </div>
+
+  <div class="settings-row">
+    <label for="panel-size">Tamaño de panel</label>
+    <select id="panel-size" onchange="panelSizeChanged()">
+      <option value="12">12 espacios</option>
+      <option value="18">18 espacios</option>
+      <option value="24" selected>24 espacios</option>
+      <option value="30">30 espacios</option>
+      <option value="42">42 espacios</option>
+    </select>
+    <label for="main-amp" style="margin-left:8px">Interruptor principal</label>
+    <input id="main-amp" type="number" min="10" step="5" value="100" style="width:72px" onchange="mainAmpChanged()" />
+    <span style="font-size:12px;color:var(--color-text-secondary, #6b6b65)">A</span>
+  </div>
+
+  <div class="overflow-banner" id="overflow-banner" style="display:none"></div>
+
+  <div class="panel-wrap">
+    <svg id="diagram-svg" class="panel-svg" width="100%" viewBox="0 0 680 440"></svg>
+  </div>
+  <div style="display:flex;gap:16px;margin-top:.5rem;flex-wrap:wrap">
+    <span style="font-size:11px;color:var(--color-text-secondary, #6b6b65);display:flex;align-items:center;gap:4px"><span style="width:10px;height:10px;border-radius:2px;background:#B5D4F4;display:inline-block"></span> Fase A</span>
+    <span style="font-size:11px;color:var(--color-text-secondary, #6b6b65);display:flex;align-items:center;gap:4px"><span style="width:10px;height:10px;border-radius:2px;background:#C0DD97;display:inline-block"></span> Fase B</span>
+    <span style="font-size:11px;color:var(--color-text-secondary, #6b6b65);display:flex;align-items:center;gap:4px"><span style="width:10px;height:10px;border-radius:2px;background:#F5C4B3;display:inline-block"></span> Fase C</span>
+    <span style="font-size:11px;color:var(--color-text-secondary, #6b6b65)">┄ borde punteado = 220V monofásico (2 polos)</span>
+    <span style="font-size:11px;color:var(--color-text-secondary, #6b6b65)">▮ barra lateral = breaker de 2–3 polos</span>
+  </div>
+</div>
+
+<div class="card">
+  <h3 id="form-title">Agregar circuito</h3>
+  <div class="field-row">
+    <label>Nombre</label>
+    <input id="c-name" placeholder="Nombre del circuito" />
+  </div>
+  <div class="field-row">
+    <label>Corriente</label>
+    <input id="c-amp" type="number" placeholder="A" min="0.1" step="0.1" />
+    <label style="margin-left:8px">Tensión</label>
+    <select id="c-volt" onchange="voltChanged()">
+      <option value="110">110 V – monofásico</option>
+      <option value="220">220 V – monofásico</option>
+      <option value="3f">220 V – trifásico</option>
+    </select>
+  </div>
+  <div class="chip-row">
+    <button type="button" class="chip" onclick="pickAmp(15)">15A</button>
+    <button type="button" class="chip" onclick="pickAmp(20)">20A</button>
+    <button type="button" class="chip" onclick="pickAmp(25)">25A</button>
+    <button type="button" class="chip" onclick="pickAmp(30)">30A</button>
+    <button type="button" class="chip" onclick="pickAmp(40)">40A</button>
+    <button type="button" class="chip" onclick="pickAmp(50)">50A</button>
+    <button type="button" class="chip" onclick="pickAmp(60)">60A</button>
+    <button type="button" class="chip" onclick="pickAmp(80)">80A</button>
+    <button type="button" class="chip" onclick="pickAmp(100)">100A</button>
+  </div>
+  <div style="margin:10px 0 4px">
+    <div style="font-size:12px;color:var(--color-text-secondary, #6b6b65);margin-bottom:6px" id="phase-label">Fase</div>
+    <div class="phase-group" id="phase-group"></div>
+    <div class="hint" id="phase-hint"></div>
+  </div>
+  <div class="err-msg" id="add-err"></div>
+  <button type="button" class="add-btn" id="submit-btn" onclick="addCircuit()">+ Agregar</button>
+  <button type="button" class="cancel-btn" id="cancel-edit-btn" style="display:none" onclick="cancelEdit()">Cancelar edición</button>
+  <button type="button" class="suggest-btn" onclick="suggestBalance()">✦ Distribución óptima inteligente</button>
+</div>
+
+<div class="card">
+  <h3>Todos los circuitos</h3>
+  <table class="tbl">
+    <thead><tr><th>#</th><th>Circuito</th><th>Tensión</th><th>Polos</th><th>Corriente</th><th>Potencia</th><th>Fase(s)</th><th>Espacio</th><th></th></tr></thead>
+    <tbody id="circuit-tbody"></tbody>
+  </table>
+</div>
+</div>
+
+<script>
+const FP=0.85;
+const OPTS={"110":[{k:"A",l:"A"},{k:"B",l:"B"},{k:"C",l:"C"}],"220":[{k:"AB",l:"A–B"},{k:"BC",l:"B–C"},{k:"AC",l:"A–C"}],"3f":[{k:"ABC",l:"A·B·C"}]};
+let selPhase="A",selVolt="110",currentView="panel";
+let panelSize=24, mainAmp=100, editingId=null;
+let lastLayout={placements:[],overflow:[],cols:[new Set(),new Set()]};
+
+let circuits=[
+  {id:1,name:"Iluminación piso 1",amp:15,volt:"110",phase:"A"},
+  {id:2,name:"Tomacorrientes oficina",amp:20,volt:"110",phase:"B"},
+  {id:3,name:"Compresor",amp:30,volt:"3f",phase:"ABC"},
+  {id:4,name:"Iluminación piso 2",amp:12,volt:"110",phase:"B"},
+  {id:5,name:"Aire acondicionado",amp:20,volt:"220",phase:"AB"},
+  {id:6,name:"Bomba hidráulica",amp:25,volt:"3f",phase:"ABC"},
+  {id:7,name:"Tomacorrientes bodega",amp:15,volt:"110",phase:"C"},
+];
+let nextId=8;
+
+function phaseAmps(c){
+  const a=c.amp;
+  if(c.volt==="3f") return {A:a,B:a,C:a};
+  if(c.volt==="110") return {A:c.phase==="A"?a:0,B:c.phase==="B"?a:0,C:c.phase==="C"?a:0};
+  if(c.phase==="AB") return {A:a,B:a,C:0};
+  if(c.phase==="BC") return {A:0,B:a,C:a};
+  if(c.phase==="AC") return {A:a,B:0,C:a};
+  return {A:0,B:0,C:0};
+}
+function phaseWatts(c){
+  const v=c.volt==="3f"?220:parseInt(c.volt);
+  const pw=c.volt==="3f"?Math.sqrt(3)*v*c.amp*FP:v*c.amp*FP;
+  const pa=phaseAmps(c);const tot=pa.A+pa.B+pa.C||1;
+  return {A:pw*pa.A/tot,B:pw*pa.B/tot,C:pw*pa.C/tot};
+}
+
+function breakerColor(c){
+  if(c.volt==="3f") return {fill:"#FAEEDA",stroke:"#854F0B",text:"#633806"};
+  if(c.volt==="220"){
+    if(c.phase==="AB") return {fill:"#E6F1FB",stroke:"#185FA5",text:"#0C447C",dash:true};
+    if(c.phase==="BC") return {fill:"#EAF3DE",stroke:"#3B6D11",text:"#27500A",dash:true};
+    if(c.phase==="AC") return {fill:"#FAECE7",stroke:"#993C1D",text:"#712B13",dash:true};
+  }
+  if(c.phase==="A") return {fill:"#E6F1FB",stroke:"#185FA5",text:"#0C447C"};
+  if(c.phase==="B") return {fill:"#EAF3DE",stroke:"#3B6D11",text:"#27500A"};
+  if(c.phase==="C") return {fill:"#FAECE7",stroke:"#993C1D",text:"#712B13"};
+  return {fill:"#F1EFE8",stroke:"#5F5E5A",text:"#2C2C2A"};
+}
+
+function phaseLabel(c){return c.phase==="ABC"?"A·B·C":c.phase==="AB"?"A–B":c.phase==="BC"?"B–C":c.phase==="AC"?"A–C":c.phase;}
+
+// ---- Lógica de slots físicos -------------------------------------------
+// En un panel real, cada fila del riel está cableada a una fase fija
+// (A, B, C, A, B, C...) y un breaker se conecta a la(s) fase(s) que le
+// tocan según el espacio físico donde se instala — no según una elección
+// libre del usuario. Un breaker de 1 polo ocupa 1 espacio, uno de 2 polos
+// (220V monofásico) ocupa 2 espacios consecutivos del mismo lado, y uno
+// de 3 polos (220V trifásico) ocupa 3 espacios consecutivos.
+function poleCount(c){ return c.volt==="3f"?3:c.volt==="220"?2:1; }
+function rowPhase(row){ return ["A","B","C"][row%3]; }
+function requiredStartMod(c){
+  if(c.volt==="110") return {A:0,B:1,C:2}[c.phase];
+  if(c.volt==="220") return {AB:0,BC:1,AC:2}[c.phase];
+  return null; // trifásico: cualquier inicio cubre A·B·C
+}
+function slotLabel(col,startRow,poles){
+  const nums=[];
+  for(let k=0;k<poles;k++) nums.push((startRow+k)*2+col+1);
+  return nums.join("-");
+}
+// Coloca cada circuito en el primer espacio físico disponible cuya(s)
+// fase(s) coincidan con lo que el circuito necesita. Si no encuentra
+// espacio (panel demasiado pequeño o fragmentado), lo manda a "overflow".
+function computeLayout(list,maxRows){
+  const cols=[new Set(),new Set()];
+  const placements=[];
+  const overflow=[];
+  list.forEach(c=>{
+    const poles=poleCount(c);
+    const startMod=requiredStartMod(c);
+    let placed=false;
+    for(let r=0; r<=maxRows-poles && !placed; r++){
+      if(startMod!==null && r%3!==startMod) continue;
+      for(let col=0; col<2; col++){
+        let free=true;
+        for(let k=0;k<poles;k++){ if(cols[col].has(r+k)){ free=false; break; } }
+        if(free){
+          for(let k=0;k<poles;k++) cols[col].add(r+k);
+          placements.push({circuit:c,col,startRow:r,poles});
+          placed=true;
+          break;
+        }
+      }
+    }
+    if(!placed) overflow.push(c);
+  });
+  return {placements,overflow,cols};
+}
+
+function drawPanel(){
+  const svg=document.getElementById("diagram-svg");
+  const W=680, ROW_H=52, TOP=90, BW=150;
+  const maxRows=Math.max(Math.ceil(panelSize/2),6);
+  const H=TOP+maxRows*ROW_H+40;
+  const midX=W/2;
+  const busX={A:midX-25,B:midX,C:midX+25};
+
+  svg.setAttribute("viewBox",`0 0 ${W} ${H}`);
+
+  const {placements,cols}=lastLayout;
+  const startMap={};
+  placements.forEach(p=>{ startMap[p.col+"-"+p.startRow]=p; });
+
+  let els=`
+  <rect x="15" y="15" width="${W-30}" height="${H-30}" rx="8" fill="none" stroke="var(--color-border-tertiary, #e5e3dd)" stroke-width="1"/>
+  <text x="${W/2}" y="32" text-anchor="middle" font-size="13" fill="var(--color-text-primary, #1a1a1a)" font-weight="500">TABLERO PRINCIPAL — ${panelSize} ESPACIOS</text>
+
+  <line x1="${busX.A}" y1="${TOP-20}" x2="${busX.A}" y2="${TOP+maxRows*ROW_H}" stroke="#185FA5" stroke-width="3"/>
+  <line x1="${busX.B}" y1="${TOP-20}" x2="${busX.B}" y2="${TOP+maxRows*ROW_H}" stroke="#3B6D11" stroke-width="3"/>
+  <line x1="${busX.C}" y1="${TOP-20}" x2="${busX.C}" y2="${TOP+maxRows*ROW_H}" stroke="#993C1D" stroke-width="3"/>
+
+  <text x="${busX.A}" y="${TOP-25}" text-anchor="middle" font-size="11" fill="#185FA5" font-weight="bold">A</text>
+  <text x="${busX.B}" y="${TOP-25}" text-anchor="middle" font-size="11" fill="#3B6D11" font-weight="bold">B</text>
+  <text x="${busX.C}" y="${TOP-25}" text-anchor="middle" font-size="11" fill="#993C1D" font-weight="bold">C</text>
+  `;
+
+  for(let col=0; col<2; col++){
+    const isLeft = col===0;
+    const x = isLeft ? midX-60-BW : midX+60;
+    for(let row=0; row<maxRows; row++){
+      const key=col+"-"+row;
+
+      if(startMap[key]){
+        const p=startMap[key];
+        const c=p.circuit;
+        const cl=breakerColor(c);
+        const boxY=TOP+row*ROW_H;
+        const boxH=p.poles*ROW_H-14;
+        const startX=isLeft? x+BW : x;
+        const lbl=slotLabel(col,row,p.poles);
+
+        els+=`<rect x="${x}" y="${boxY}" width="${BW}" height="${boxH}" rx="4" fill="${cl.fill}" stroke="${cl.stroke}" stroke-width="1.5"${cl.dash?' stroke-dasharray="5 3"':""}/>`;
+
+        if(p.poles>1){
+          const tieX=isLeft? x+BW-6 : x;
+          els+=`<rect x="${tieX}" y="${boxY+4}" width="6" height="${boxH-8}" fill="${cl.stroke}" opacity="0.3"/>`;
+        }
+
+        const maxChars=16;
+        const name=c.name.length>maxChars?c.name.slice(0,maxChars-1)+"…":c.name;
+        els+=`<text x="${x+8}" y="${boxY+16}" font-size="10" font-weight="500" fill="var(--color-text-primary, #1a1a1a)">${lbl}. ${name}</text>`;
+        els+=`<text x="${x+8}" y="${boxY+30}" font-size="9" fill="var(--color-text-secondary, #6b6b65)">${c.amp}A | ${phaseLabel(c)}</text>`;
+
+        for(let k=0;k<p.poles;k++){
+          const ph=rowPhase(row+k);
+          const cy=boxY+k*ROW_H+19;
+          els+=`<line x1="${startX}" y1="${cy}" x2="${busX[ph]}" y2="${cy}" stroke="var(--color-text-primary, #1a1a1a)" stroke-width="1.2"/>`;
+          els+=`<circle cx="${busX[ph]}" cy="${cy}" r="3" fill="var(--color-text-primary, #1a1a1a)"/>`;
+        }
+      } else if(!cols[col].has(row)){
+        const y=TOP+row*ROW_H;
+        const ph=rowPhase(row);
+        const lbl=slotLabel(col,row,1);
+        els+=`<rect x="${x}" y="${y}" width="${BW}" height="38" rx="4" fill="var(--color-background-secondary, #f4f3f1)" stroke="var(--color-border-secondary, #d8d6d0)" stroke-width="0.5" stroke-dasharray="3 3" opacity="0.6"/>`;
+        els+=`<text x="${x+BW/2}" y="${y+22}" text-anchor="middle" font-size="10" fill="var(--color-text-secondary, #6b6b65)">${lbl}. Reserva (Fase ${ph})</text>`;
+      }
+    }
+  }
+
+  svg.innerHTML=els;
+}
+
+function drawSingleLine(){
+  const svg=document.getElementById("diagram-svg");
+  const W=680;
+  const BUS_Y=100;
+  const CKT_TOP=150;
+  const CKT_H=46;
+  const n=circuits.length;
+  const H=CKT_TOP+n*CKT_H+40;
+  svg.setAttribute("viewBox",`0 0 ${W} ${H}`);
+
+  const xA=120, xB=340, xC=560;
+
+  let els=`
+  <rect x="15" y="15" width="${W-30}" height="${H-30}" rx="8" fill="none" stroke="var(--color-border-tertiary, #e5e3dd)" stroke-width="1"/>
+  <text x="${W/2}" y="38" text-anchor="middle" font-size="12" fill="var(--color-text-primary, #1a1a1a)" font-weight="500">DIAGRAMA UNIFILAR DE DISTRIBUCIÓN</text>
+
+  <line x1="${xA}" y1="${BUS_Y}" x2="${xA}" y2="${CKT_TOP+n*CKT_H}" stroke="#185FA5" stroke-width="2" opacity="0.4"/>
+  <line x1="${xB}" y1="${BUS_Y}" x2="${xB}" y2="${CKT_TOP+n*CKT_H}" stroke="#3B6D11" stroke-width="2" opacity="0.4"/>
+  <line x1="${xC}" y1="${BUS_Y}" x2="${xC}" y2="${CKT_TOP+n*CKT_H}" stroke="#993C1D" stroke-width="2" opacity="0.4"/>
+
+  <text x="${xA}" y="${BUS_Y-8}" text-anchor="middle" font-size="11" fill="#185FA5" font-weight="bold">Barra A</text>
+  <text x="${xB}" y="${BUS_Y-8}" text-anchor="middle" font-size="11" fill="#3B6D11" font-weight="bold">Barra B</text>
+  <text x="${xC}" y="${BUS_Y-8}" text-anchor="middle" font-size="11" fill="#993C1D" font-weight="bold">Barra C</text>
+  `;
+
+  circuits.forEach((c,i)=>{
+    const y=CKT_TOP+i*CKT_H;
+    const mid=y+14;
+    const cl=breakerColor(c);
+    const pa=phaseAmps(c);
+    const LOAD_X=W-160;
+
+    if(pa.A>0) els+=`<circle cx="${xA}" cy="${mid}" r="3.5" fill="#185FA5"/><line x1="${xA}" y1="${mid}" x2="${LOAD_X}" y2="${mid}" stroke="var(--color-text-primary, #1a1a1a)" stroke-width="1"/>`;
+    if(pa.B>0) els+=`<circle cx="${xB}" cy="${mid}" r="3.5" fill="#3B6D11"/><line x1="${xB}" y1="${mid}" x2="${LOAD_X}" y2="${mid}" stroke="var(--color-text-primary, #1a1a1a)" stroke-width="1"/>`;
+    if(pa.C>0) els+=`<circle cx="${xC}" cy="${mid}" r="3.5" fill="#993C1D"/><line x1="${xC}" y1="${mid}" x2="${LOAD_X}" y2="${mid}" stroke="var(--color-text-primary, #1a1a1a)" stroke-width="1"/>`;
+
+    const symX = LOAD_X - 40;
+    els += `<path d="M ${symX+10} ${mid} A 6 6 0 0 0 ${symX+22} ${mid}" fill="none" stroke="var(--color-text-primary, #1a1a1a)" stroke-width="1.5"/>`;
+
+    els+=`<rect x="${LOAD_X}" y="${mid-12}" width="110" height="24" rx="3" fill="${cl.fill}" stroke="${cl.stroke}" stroke-width="1"/>`;
+    els+=`<text x="${LOAD_X+55}" y="${mid+4}" text-anchor="middle" font-size="9" font-weight="500" fill="${cl.text}">${c.name.slice(0,16)}</text>`;
+  });
+
+  svg.innerHTML=els;
+}
+
+function setView(v){
+  currentView=v;
+  document.getElementById("btn-panel").classList.toggle("active",v==="panel");
+  document.getElementById("btn-single").classList.toggle("active",v==="single");
+  v==="panel"?drawPanel():drawSingleLine();
+}
+
+function buildPhaseUI(volt,current){
+  const group=document.getElementById("phase-group");
+  group.innerHTML="";
+  if(volt==="3f"){
+    group.style.display="none";
+    document.getElementById("phase-label").textContent="Trifásico (usa A·B·C automáticamente)";
+    selPhase="ABC";
+  } else {
+    group.style.display="flex";
+    document.getElementById("phase-label").textContent = volt==="110" ? "Fase" : "Combinación de fases";
+    const opts=OPTS[volt];
+    opts.forEach(o=>{
+      const btn=document.createElement("button");
+      btn.type="button";
+      btn.className="ph-btn";btn.textContent=o.l;btn.dataset.key=o.k;
+      btn.onclick=()=>selectPhase(o.k);
+      group.appendChild(btn);
+    });
+    const init=current&&opts.find(o=>o.k===current)?current:opts[0].k;
+    selectPhase(init);
+  }
+  updatePhaseHint(volt);
+}
+
+function updatePhaseHint(volt){
+  const hint=document.getElementById("phase-hint");
+  const v=volt||selVolt;
+  if(v==="110") hint.textContent="Ocupa 1 espacio físico en el bus de la fase elegida.";
+  else if(v==="220") hint.textContent="Ocupa 2 espacios físicos consecutivos del mismo lado (par de fases).";
+  else hint.textContent="Ocupa 3 espacios físicos consecutivos (A·B·C).";
+}
+
+function selectPhase(k){
+  selPhase=k;
+  document.querySelectorAll("#phase-group .ph-btn").forEach(b=>{
+    b.className="ph-btn"+(b.dataset.key===k?" sel-"+k:"");
+  });
+}
+
+function voltChanged(){
+  selVolt=document.getElementById("c-volt").value;
+  buildPhaseUI(selVolt,null);
+}
+
+function pickAmp(v){
+  document.getElementById("c-amp").value=v;
+  document.getElementById("add-err").textContent="";
+}
+
+function addCircuit(){
+  const name=document.getElementById("c-name").value.trim();
+  const amp=parseFloat(document.getElementById("c-amp").value);
+  const volt=document.getElementById("c-volt").value;
+  const errEl=document.getElementById("add-err");
+
+  if(!name){ errEl.textContent="Ingresa un nombre para el circuito."; return; }
+  if(isNaN(amp)||amp<=0||amp>800){ errEl.textContent="Ingresa una corriente válida (0.1–800 A)."; return; }
+  errEl.textContent="";
+
+  const phase=volt==="3f"?"ABC":selPhase;
+
+  if(editingId!==null){
+    const c=circuits.find(x=>x.id===editingId);
+    if(c){ c.name=name; c.amp=amp; c.volt=volt; c.phase=phase; }
+    cancelEdit();
+  } else {
+    circuits.push({id:nextId++,name,amp,volt,phase});
+  }
+
+  document.getElementById("c-name").value="";
+  document.getElementById("c-amp").value="";
+  render();
+}
+
+function editCircuit(id){
+  const c=circuits.find(x=>x.id===id);
+  if(!c) return;
+  editingId=id;
+  document.getElementById("c-name").value=c.name;
+  document.getElementById("c-amp").value=c.amp;
+  document.getElementById("c-volt").value=c.volt;
+  selVolt=c.volt;
+  buildPhaseUI(c.volt,c.phase);
+  document.getElementById("form-title").textContent="Editar circuito";
+  document.getElementById("submit-btn").textContent="💾 Guardar cambios";
+  document.getElementById("cancel-edit-btn").style.display="inline-block";
+  document.getElementById("add-err").textContent="";
+}
+
+function cancelEdit(){
+  editingId=null;
+  document.getElementById("c-name").value="";
+  document.getElementById("c-amp").value="";
+  document.getElementById("form-title").textContent="Agregar circuito";
+  document.getElementById("submit-btn").textContent="+ Agregar";
+  document.getElementById("cancel-edit-btn").style.display="none";
+  document.getElementById("add-err").textContent="";
+}
+
+function delCircuit(id){
+  circuits=circuits.filter(c=>c.id!==id);
+  if(editingId===id) cancelEdit();
+  render();
+}
+
+function panelSizeChanged(){
+  panelSize=parseInt(document.getElementById("panel-size").value);
+  render();
+}
+
+function mainAmpChanged(){
+  const v=parseFloat(document.getElementById("main-amp").value);
+  mainAmp=(isNaN(v)||v<=0)?100:v;
+  render();
+}
+
+// Heurística "longest processing time": ordena de mayor a menor corriente
+// y asigna cada circuito monofásico (110V o el par de fases de 220V) a la
+// combinación que minimice el desbalance resultante. Los trifásicos no
+// se tocan porque siempre cargan las 3 fases por igual.
+function suggestBalance(){
+  const load={A:0,B:0,C:0};
+  circuits.filter(c=>c.volt==="3f").forEach(c=>{ load.A+=c.amp; load.B+=c.amp; load.C+=c.amp; });
+
+  const candidates=circuits.filter(c=>c.volt!=="3f").sort((a,b)=>b.amp-a.amp);
+
+  candidates.forEach(c=>{
+    if(c.volt==="110"){
+      const best=["A","B","C"].reduce((a,b)=>load[a]<=load[b]?a:b);
+      c.phase=best;
+      load[best]+=c.amp;
+    } else {
+      const pairs=[["A","B"],["B","C"],["A","C"]];
+      let bestPair=pairs[0], bestSpread=Infinity;
+      pairs.forEach(([p1,p2])=>{
+        const sim={...load}; sim[p1]+=c.amp; sim[p2]+=c.amp;
+        const spread=Math.max(sim.A,sim.B,sim.C)-Math.min(sim.A,sim.B,sim.C);
+        if(spread<bestSpread){ bestSpread=spread; bestPair=[p1,p2]; }
+      });
+      const label=(bestPair.includes("A")&&bestPair.includes("B"))?"AB":(bestPair.includes("B")&&bestPair.includes("C"))?"BC":"AC";
+      c.phase=label;
+      load[bestPair[0]]+=c.amp; load[bestPair[1]]+=c.amp;
+    }
+  });
+  render();
+}
+
+function voltLabel(c){return c.volt==="3f"?"3F-220V":c.volt+"V";}
+function badgeClass(v){return v==="110"?"b-110":v==="220"?"b-220":"b-3f";}
+function phaseDisp(c){return c.phase==="ABC"?"A·B·C":c.phase==="AB"?"A–B":c.phase==="BC"?"B–C":c.phase==="AC"?"A–C":c.phase;}
+function phaseClass(c){return c.phase==="ABC"||c.phase==="AB"||c.phase==="BC"||c.phase==="AC"?"p3f":"p"+c.phase.toLowerCase();}
+
+function render(){
+  const maxRows=Math.max(Math.ceil(panelSize/2),6);
+  lastLayout=computeLayout(circuits,maxRows);
+
+  const sum=k=>circuits.reduce((s,c)=>s+phaseAmps(c)[k],0);
+  const sumW=k=>circuits.reduce((s,c)=>s+phaseWatts(c)[k],0);
+  const fa=sum("A"),fb=sum("B"),fc=sum("C");
+  const wa=sumW("A"),wb=sumW("B"),wc=sumW("C");
+  const avg=(fa+fb+fc)/3;
+  const unbal=avg>0?((Math.max(fa,fb,fc)-Math.min(fa,fb,fc))/avg*100):0;
+  const totalW=wa+wb+wc;
+  const maxPhase=Math.max(fa,fb,fc);
+  const capPct=mainAmp>0?(maxPhase/mainAmp*100):0;
+
+  document.getElementById("m-kw").textContent=(totalW/1000).toFixed(2)+" kW";
+  document.getElementById("m-avg").textContent=avg.toFixed(1)+" A";
+
+  const uEl=document.getElementById("m-unbal");
+  uEl.textContent=unbal.toFixed(1)+"%";
+  uEl.className="val "+(unbal<10?"ok":unbal<20?"warn":"bad");
+
+  const capEl=document.getElementById("m-cap");
+  capEl.textContent=capPct.toFixed(0)+"%";
+  capEl.className="val "+(capPct<80?"ok":capPct<100?"warn":"bad");
+
+  const sEl=document.getElementById("m-status");
+  if(capPct>=100){ sEl.textContent="Sobrecarga"; sEl.className="val bad"; }
+  else if(unbal<10){ sEl.textContent="Balanceado"; sEl.className="val ok"; }
+  else if(unbal<20){ sEl.textContent="Aceptable"; sEl.className="val warn"; }
+  else{ sEl.textContent="Desbalanceado"; sEl.className="val bad"; }
+
+  const maxBar=Math.max(fa,fb,fc,1);
+  [["A","a",fa,wa],["B","b",fb,wb],["C","c",fc,wc]].forEach(([P,p,amp,w])=>{
+    document.getElementById("f"+p+"-a").textContent=amp.toFixed(1)+" A";
+    document.getElementById("f"+p+"-w").textContent=(w/1000).toFixed(2)+" kW";
+    document.getElementById("f"+p+"-bar").style.width=(amp/maxBar*100)+"%";
+    const list=document.getElementById("f"+p+"-list");
+    list.innerHTML="";
+    circuits.forEach(c=>{
+      const a=phaseAmps(c);
+      if(a[P]<=0) return;
+      const row=document.createElement("div");
+      row.className="circuit-row";
+      row.innerHTML=`<span class="badge ${badgeClass(c.volt)}">${voltLabel(c)}</span><span class="cname">${c.name}</span><span class="camp">${a[P].toFixed(1)} A</span>`;
+      list.appendChild(row);
+    });
+  });
+
+  const overflowEl=document.getElementById("overflow-banner");
+  if(lastLayout.overflow.length){
+    overflowEl.style.display="block";
+    overflowEl.textContent=`⚠ ${lastLayout.overflow.length} circuito(s) no caben en un panel de ${panelSize} espacios: ${lastLayout.overflow.map(c=>c.name).join(", ")}. Elige un panel más grande o elimina circuitos.`;
+  } else {
+    overflowEl.style.display="none";
+  }
+
+  const placementById={};
+  lastLayout.placements.forEach(p=>{ placementById[p.circuit.id]=p; });
+  const overflowIds=new Set(lastLayout.overflow.map(c=>c.id));
+
+  const tbody=document.getElementById("circuit-tbody");
+  tbody.innerHTML="";
+  circuits.forEach((c,i)=>{
+    const v=c.volt==="3f"?220:parseInt(c.volt);
+    const pw=c.volt==="3f"?Math.sqrt(3)*v*c.amp*FP:v*c.amp*FP;
+    const p=placementById[c.id];
+    const space=overflowIds.has(c.id)?`<span class="overflow-flag">Sin espacio</span>`:(p?slotLabel(p.col,p.startRow,p.poles):"—");
+    const tr=document.createElement("tr");
+    tr.innerHTML=`<td>${i+1}</td><td>${c.name}</td><td><span class="badge ${badgeClass(c.volt)}">${voltLabel(c)}</span></td><td>${poleCount(c)}</td><td>${c.amp.toFixed(1)} A</td><td>${(pw/1000).toFixed(2)} kW</td><td class="${phaseClass(c)}">${phaseDisp(c)}</td><td>${space}</td><td><button type="button" class="edit" aria-label="Editar circuito" onclick="editCircuit(${c.id})">✎</button><button type="button" class="del" aria-label="Eliminar circuito" onclick="delCircuit(${c.id})">×</button></td>`;
+    tbody.appendChild(tr);
+  });
+
+  currentView==="panel"?drawPanel():drawSingleLine();
+}
+
+buildPhaseUI("110",null);
+render();
+</script>
