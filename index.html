@@ -41,7 +41,7 @@ input,select{padding:6px 10px;font-size:13px;border:0.5px solid var(--color-bord
 .add-btn:hover{background:var(--color-background-secondary, #f4f3f1)}
 .cancel-btn{padding:6px 14px;font-size:13px;border-radius:var(--border-radius-md, 8px);cursor:pointer;border:0.5px solid var(--color-border-secondary, #d8d6d0);background:transparent;color:var(--color-text-secondary, #6b6b65);margin-top:4px;margin-left:6px}
 .cancel-btn:hover{background:var(--color-background-secondary, #f4f3f1)}
-.suggest-btn{margin-top:.75rem;font-size:12px;padding:5px 14px;border-radius:99px;border:0.5px solid var(--color-border-secondary, #d8d6d0);background:var(--color-background-secondary, #f4f3f1);color:var(--color-text-secondary, #6b6b65);cursor:pointer}
+.suggest-btn{margin-top:.75rem;font-size:12px;padding:5px 14px;border-radius:99px;border:0.5px solid var(--color-border-secondary, #d8d6d0);background:var(--color-background-secondary, #f4f3f1);color:var(--color-text-secondary, #6b6b65);cursor:pointer; font-weight: 500;}
 .suggest-btn:hover{background:var(--color-background-tertiary, #ebe9e4)}
 .chip-row{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
 .chip{padding:3px 10px;font-size:11px;border-radius:99px;border:0.5px solid var(--color-border-secondary, #d8d6d0);background:var(--color-background-secondary, #f4f3f1);color:var(--color-text-secondary, #6b6b65);cursor:pointer}
@@ -88,7 +88,6 @@ input,select{padding:6px 10px;font-size:13px;border:0.5px solid var(--color-bord
 .u-item-title { font-weight: 500; margin-bottom: 4px; color: var(--color-text-primary, #1a1a1a); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .u-item-meta { display: flex; justify-content: space-between; color: var(--color-text-secondary, #6b6b65); }
 
-/* MEJORA UX VISUAL DEL TABLERO */
 .svg-drop-target { transition: all 0.15s ease; }
 .svg-drop-target.drag-hover { stroke: #1a1a1a !important; stroke-width: 3px !important; filter: brightness(0.95); opacity: 0.95; }
 .tips-box { background: #F4F3F1; padding: 10px 14px; border-radius: 8px; font-size: 12px; color: #6B6B65; margin-bottom: 14px; display:flex; align-items:center; gap:10px; line-height: 1.4; border: 0.5px solid #d8d6d0;}
@@ -176,7 +175,7 @@ input,select{padding:6px 10px;font-size:13px;border:0.5px solid var(--color-bord
 
   <div class="tips-box">
     <span style="font-size:18px;">💡</span> 
-    <span><strong>Tip de acomodo:</strong> Arrastra circuitos desde la lista lateral hacia los espacios vacíos del tablero. Si sueltas uno sobre otro, el viejo se reemplazará automáticamente. Haz <strong>DOBLE CLIC</strong> en cualquier circuito dentro del panel para sacarlo rápidamente.</span>
+    <span><strong>Tip de acomodo:</strong> Arrastra circuitos desde la lista lateral hacia los espacios vacíos. Si sueltas uno sobre otro, el viejo será reemplazado. Haz <strong>DOBLE CLIC</strong> en cualquier circuito dentro del panel para mandarlo rápidamente a "Sin asignar".</span>
   </div>
 
   <div class="layout-container">
@@ -234,7 +233,7 @@ input,select{padding:6px 10px;font-size:13px;border:0.5px solid var(--color-bord
   <div class="err-msg" id="add-err"></div>
   <button type="button" class="add-btn" id="submit-btn" onclick="addCircuit()">+ Agregar</button>
   <button type="button" class="cancel-btn" id="cancel-edit-btn" style="display:none" onclick="cancelEdit()">Cancelar edición</button>
-  <button type="button" class="suggest-btn" onclick="suggestBalance()">✦ Distribución óptima automática</button>
+  <button type="button" class="suggest-btn" onclick="suggestBalance()">✦ Distribución óptima automática (Tetris + Ajuste Fino)</button>
 </div>
 
 <div class="card">
@@ -277,7 +276,6 @@ let circuits=[
 ];
 let nextId=27;
 
-// --- EVENTOS DRAG & DROP MEJORADOS ---
 function allowDropSidebar(ev) { ev.preventDefault(); }
 function drag(ev, id) { ev.dataTransfer.setData("text/plain", id); }
 
@@ -324,9 +322,8 @@ function processDrop(ev, col, row) {
 
   const poles = poleCount(c);
   const maxRows = Math.max(Math.ceil(panelSize/2), 6);
-  if(row + poles > maxRows) return; // No cabe físicamente hacia abajo, lo ignoramos
+  if(row + poles > maxRows) return; 
 
-  // Revisar colisiones y mandar el circuito estorbante a la barra lateral
   circuits.forEach(other => {
     if(other.id !== c.id && other.slot && typeof other.slot === 'object' && other.slot.col === col) {
       const otherPoles = poleCount(other);
@@ -443,7 +440,7 @@ function computeLayout(list,maxRows){
   const placements=[];
   const overflow=[];
   
-  // 1. Asignaciones estrictamente manuales primero
+  // 1. Asignaciones estrictamente manuales
   list.forEach(c=>{
     if(c.slot && typeof c.slot === 'object'){
       const poles=poleCount(c);
@@ -532,7 +529,6 @@ function drawPanel(){
         const startX=isLeft? x+BW : x;
         const lbl=slotLabel(col,row,p.poles);
 
-        // Agregamos `pointer-events: none` a todo el interior para que no bloquee el drag
         els+=`<g draggable="true" ondragstart="drag(event, ${c.id})" ondragover="allowDropSvg(event)" ondragleave="leaveSvg(event)" ondrop="dropSvg(event, ${col}, ${row})" ondblclick="moveToUnassigned(${c.id})" style="cursor:grab;">`;
         els+=`<rect class="svg-drop-target" x="${x}" y="${boxY}" width="${BW}" height="${boxH}" rx="4" fill="${cl.fill}" stroke="${cl.stroke}" stroke-width="1.5"${cl.dash?' stroke-dasharray="5 3"':""} />`;
 
@@ -742,20 +738,24 @@ function mainAmpChanged(){
   render();
 }
 
+// ==== NUEVA IA DE EMPAQUETADO TETRIS + HILL CLIMBING ====
 function suggestBalance(){
   circuits.forEach(c => delete c.slot); 
-  const load={A:0,B:0,C:0};
-  let optimizedSoFar = [];
   const maxRows = Math.max(Math.ceil(panelSize/2), 6);
   
-  const allSorted = [...circuits].sort((a,b) => {
+  // 1. ORDEN FÍSICO TETRIS (Más grandes primero, luego más pesados)
+  const tetrisOrder = [...circuits].sort((a,b) => {
     const pA = poleCount(a);
     const pB = poleCount(b);
     if(pA !== pB) return pB - pA; 
     return b.amp - a.amp; 
   });
 
-  allSorted.forEach(c=>{
+  let currentPlacements = [];
+  let currentUnassigned = [];
+
+  // PASO 1: Acomodo Voraz (Greedy)
+  tetrisOrder.forEach(c => {
     let bestPhase = null;
     let bestSpread = Infinity;
     
@@ -770,20 +770,21 @@ function suggestBalance(){
 
     opts.forEach(testPhase => {
       c.phase = testPhase;
-      const testGroup = [...optimizedSoFar, c]; 
+      const testGroup = [...currentPlacements, c]; 
       const simLayout = computeLayout(testGroup, maxRows);
       
       const fits = !simLayout.overflow.some(x => x.id === c.id);
 
       if(fits) {
-        let simA = load.A, simB = load.B, simC = load.C;
-        if(testPhase.includes("A")) simA += c.amp;
-        if(testPhase.includes("B")) simB += c.amp;
-        if(testPhase.includes("C")) simC += c.amp;
-        
+        let load = {A:0, B:0, C:0};
+        testGroup.forEach(tc => {
+          if(tc.phase.includes("A")) load.A += tc.amp;
+          if(tc.phase.includes("B")) load.B += tc.amp;
+          if(tc.phase.includes("C")) load.C += tc.amp;
+        });
         let spread = sysType === "3" 
-            ? Math.max(simA,simB,simC) - Math.min(simA,simB,simC)
-            : Math.abs(simA - simB);
+            ? Math.max(load.A,load.B,load.C) - Math.min(load.A,load.B,load.C)
+            : Math.abs(load.A - load.B);
         
         if(spread < bestSpread){
           bestSpread = spread; bestPhase = testPhase;
@@ -793,14 +794,79 @@ function suggestBalance(){
 
     if(bestPhase !== null) {
       c.phase = bestPhase;
-      if(bestPhase.includes("A")) load.A += c.amp;
-      if(bestPhase.includes("B")) load.B += c.amp;
-      if(bestPhase.includes("C")) load.C += c.amp;
-      optimizedSoFar.push(c);
+      currentPlacements.push(c);
     } else {
-      c.slot = 'unassigned';
-      optimizedSoFar.push(c);
+      currentUnassigned.push(c);
     }
+  });
+
+  // PASO 2: Afinación Fina (Hill Climbing) para balance perfecto
+  let improved = true;
+  let iterations = 0;
+  while(improved && iterations < 30) {
+    improved = false;
+    iterations++;
+
+    let finetuneGroup = [...currentPlacements].sort((a,b) => a.amp - b.amp); // Mover los ligeros para ajustar
+
+    for(let i=0; i<finetuneGroup.length; i++) {
+      let c = finetuneGroup[i];
+      if(c.volt === "3f") continue; // No se puede cambiar de fase
+
+      let opts = sysType === "3" ? (c.volt==="110" ? ["A","B","C"] : ["AB","BC","AC"]) : (c.volt==="110" ? ["A","B"] : ["AB"]);
+
+      let currentLoad = {A:0, B:0, C:0};
+      currentPlacements.forEach(tc => {
+        if(tc.phase.includes("A")) currentLoad.A += tc.amp;
+        if(tc.phase.includes("B")) currentLoad.B += tc.amp;
+        if(tc.phase.includes("C")) currentLoad.C += tc.amp;
+      });
+      let currentSpread = sysType === "3"
+          ? Math.max(currentLoad.A, currentLoad.B, currentLoad.C) - Math.min(currentLoad.A, currentLoad.B, currentLoad.C)
+          : Math.abs(currentLoad.A - currentLoad.B);
+
+      let bestPhaseForC = c.phase;
+      let bestSpreadForC = currentSpread;
+
+      for(let newPhase of opts) {
+        if(newPhase === c.phase) continue;
+        let oldPhase = c.phase;
+        c.phase = newPhase;
+
+        const simLayout = computeLayout(currentPlacements, maxRows);
+        if(!simLayout.overflow.some(x => x.id === c.id)) {
+           let testLoad = {A:0, B:0, C:0};
+           currentPlacements.forEach(tc => {
+             if(tc.phase.includes("A")) testLoad.A += tc.amp;
+             if(tc.phase.includes("B")) testLoad.B += tc.amp;
+             if(tc.phase.includes("C")) testLoad.C += tc.amp;
+           });
+           let testSpread = sysType === "3"
+              ? Math.max(testLoad.A, testLoad.B, testLoad.C) - Math.min(testLoad.A, testLoad.B, testLoad.C)
+              : Math.abs(testLoad.A - testLoad.B);
+
+           if(testSpread < bestSpreadForC - 0.01) { // 0.01 previene loops infinitos por decimales
+             bestSpreadForC = testSpread;
+             bestPhaseForC = newPhase;
+           }
+        }
+        c.phase = oldPhase; 
+      }
+
+      if(bestPhaseForC !== c.phase) {
+        c.phase = bestPhaseForC;
+        improved = true;
+      }
+    }
+  }
+
+  // PASO 3: Clavar las posiciones en el concreto
+  const finalLayout = computeLayout(currentPlacements, maxRows);
+  finalLayout.placements.forEach(p => {
+    p.circuit.slot = {col: p.col, row: p.startRow};
+  });
+  currentUnassigned.forEach(c => {
+    c.slot = 'unassigned';
   });
   
   render();
