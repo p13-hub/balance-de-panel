@@ -1,4 +1,4 @@
-<html><head><style>
+<style>
 *{box-sizing:border-box;margin:0;padding:0}
 .wrap{padding:1rem 0; font-family: var(--font-sans, system-ui, -apple-system, "Segoe UI", sans-serif);}
 h2{font-size:18px;font-weight:500;color:var(--color-text-primary, #1a1a1a);margin-bottom:4px}
@@ -58,25 +58,63 @@ input,select{padding:6px 10px;font-size:13px;border:0.5px solid var(--color-bord
 .del,.edit{cursor:pointer;color:var(--color-text-secondary, #6b6b65);border:none;background:transparent;font-size:14px;padding:0 4px}
 .del:hover{color:#A32D2D}
 .edit:hover{color:var(--color-text-primary, #1a1a1a)}
-.panel-wrap{overflow-x:auto;margin-bottom:.5rem}
-.panel-svg{display:block}
 .tab-btn{padding:5px 14px;font-size:12px;border-radius:99px;border:0.5px solid var(--color-border-secondary, #d8d6d0);cursor:pointer;background:var(--color-background-secondary, #f4f3f1);color:var(--color-text-secondary, #6b6b65);margin-right:6px}
 .tab-btn.active{background:var(--color-background-primary, #ffffff);color:var(--color-text-primary, #1a1a1a);font-weight:500;border-color:var(--color-border-primary, #1a1a1a)}
+
+.layout-container { display: flex; gap: 16px; align-items: flex-start; margin-bottom: .5rem; flex-wrap: wrap; }
+.panel-wrap { flex: 1; min-width: 300px; overflow-x: auto; }
+.panel-svg { display: block; }
+.unassigned-sidebar { 
+  flex: 0 0 240px; 
+  background: var(--color-background-secondary, #f4f3f1); 
+  border: 1.5px dashed var(--color-border-secondary, #d8d6d0); 
+  border-radius: var(--border-radius-lg, 12px); 
+  padding: 12px; 
+  min-height: 440px; 
+  align-self: stretch;
+}
+.unassigned-sidebar.drag-over { background: #e5e3dd; border-color: #1a1a1a; }
+.u-item {
+  background: var(--color-background-primary, #ffffff);
+  border: 0.5px solid var(--color-border-secondary, #d8d6d0);
+  border-radius: 6px;
+  padding: 8px;
+  margin-bottom: 8px;
+  font-size: 11px;
+  cursor: grab;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  transition: transform 0.1s;
+}
+.u-item:active { cursor: grabbing; transform: scale(0.98); }
+.u-item-title { font-weight: 500; margin-bottom: 4px; color: var(--color-text-primary, #1a1a1a); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.u-item-meta { display: flex; justify-content: space-between; color: var(--color-text-secondary, #6b6b65); }
+
+@media print {
+  body { background: #ffffff; }
+  * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .card:nth-of-type(2), .settings-row, .tab-btn, #btn-export-pdf, .edit, .del, .chip-row, .suggest-btn, .unassigned-sidebar { display: none !important; }
+  .wrap { max-width: 100%; padding: 0; }
+  .card { border: none; padding: 0; margin-bottom: 2rem; page-break-inside: avoid; }
+  .panel-wrap { overflow: visible !important; }
+  .metrics, .phase-bars { page-break-inside: avoid; }
+  .tbl { page-break-inside: auto; }
+  .tbl tr { page-break-inside: avoid; page-break-after: auto; }
+}
 </style>
 
-</head><body><div class="wrap">
-<h2>Centro de carga trifásico</h2>
-<p class="sub">Circuitos monofásicos 110 V / 220 V y trifásicos 220 V con distribución física real de espacios por fase.</p>
+<div class="wrap">
+<h2 id="main-title">Centro de carga trifásico</h2>
+<p class="sub" id="main-sub">Circuitos monofásicos 110 V / 220 V y trifásicos 220 V con distribución física real de espacios por fase.</p>
 
 <div class="metrics">
-  <div class="metric"><div class="label">Potencia total</div><div class="val" id="m-kw">0 kW</div></div>
+  <div class="metric"><div class="label">Potencia total (En panel)</div><div class="val" id="m-kw">0 kW</div></div>
   <div class="metric"><div class="label">Capacidad usada</div><div class="val" id="m-cap">0%</div></div>
   <div class="metric"><div class="label">Promedio por fase</div><div class="val" id="m-avg">0 A</div></div>
   <div class="metric"><div class="label">Desbalance</div><div class="val" id="m-unbal">—</div></div>
   <div class="metric"><div class="label">Estado</div><div class="val" id="m-status">—</div></div>
 </div>
 
-<div class="phase-bars">
+<div class="phase-bars" id="phase-bars-container">
   <div class="phase-col phase-a">
     <h3>Fase A</h3>
     <div class="atotal" id="fa-a">0 A</div>
@@ -106,32 +144,47 @@ input,select{padding:6px 10px;font-size:13px;border:0.5px solid var(--color-bord
     <div>
       <button type="button" class="tab-btn active" id="btn-panel" onclick="setView('panel')">Panel de breakers</button>
       <button type="button" class="tab-btn" id="btn-single" onclick="setView('single')">Unifilar</button>
+      <button type="button" class="tab-btn" id="btn-export-pdf" onclick="window.print()" style="background: #1a1a1a; color: #ffffff; border-color: #1a1a1a; font-weight: 500;">🖨️ Exportar a PDF</button>
     </div>
   </div>
 
   <div class="settings-row">
-    <label for="panel-size">Tamaño de panel</label>
+    <label for="sys-type">Sistema</label>
+    <select id="sys-type" onchange="sysTypeChanged()">
+      <option value="3" selected>Trifásico (3 Fases)</option>
+      <option value="2">Monofásico (2 Fases - 110/220V)</option>
+    </select>
+
+    <label for="panel-size" style="margin-left:8px">Tamaño de panel</label>
     <select id="panel-size" onchange="panelSizeChanged()">
       <option value="12">12 espacios</option>
       <option value="18">18 espacios</option>
-      <option value="24" selected="">24 espacios</option>
+      <option value="24" selected>24 espacios</option>
       <option value="30">30 espacios</option>
       <option value="42">42 espacios</option>
     </select>
     <label for="main-amp" style="margin-left:8px">Interruptor principal</label>
-    <input id="main-amp" type="number" min="10" step="5" value="100" style="width:72px" onchange="mainAmpChanged()">
+    <input id="main-amp" type="number" min="10" step="5" value="100" style="width:72px" onchange="mainAmpChanged()" />
     <span style="font-size:12px;color:var(--color-text-secondary, #6b6b65)">A</span>
   </div>
 
   <div class="overflow-banner" id="overflow-banner" style="display:none"></div>
 
-  <div class="panel-wrap">
-    <svg id="diagram-svg" class="panel-svg" width="100%" viewBox="0 0 680 440"></svg>
+  <div class="layout-container">
+    <div class="panel-wrap">
+      <svg id="diagram-svg" class="panel-svg" width="100%" viewBox="0 0 680 440"></svg>
+    </div>
+    
+    <div class="unassigned-sidebar" id="unassigned-sidebar" ondragover="allowDrop(event)" ondrop="dropUnassigned(event)" ondragenter="this.classList.add('drag-over')" ondragleave="this.classList.remove('drag-over')">
+      <h4 style="font-size:12px;margin-bottom:12px;color:var(--color-text-secondary);text-transform:uppercase;letter-spacing:0.05em;">Zona Sin Asignar / Arrastra aquí para remover</h4>
+      <div id="unassigned-list"></div>
+    </div>
   </div>
+
   <div style="display:flex;gap:16px;margin-top:.5rem;flex-wrap:wrap">
     <span style="font-size:11px;color:var(--color-text-secondary, #6b6b65);display:flex;align-items:center;gap:4px"><span style="width:10px;height:10px;border-radius:2px;background:#B5D4F4;display:inline-block"></span> Fase A</span>
     <span style="font-size:11px;color:var(--color-text-secondary, #6b6b65);display:flex;align-items:center;gap:4px"><span style="width:10px;height:10px;border-radius:2px;background:#C0DD97;display:inline-block"></span> Fase B</span>
-    <span style="font-size:11px;color:var(--color-text-secondary, #6b6b65);display:flex;align-items:center;gap:4px"><span style="width:10px;height:10px;border-radius:2px;background:#F5C4B3;display:inline-block"></span> Fase C</span>
+    <span id="legend-phase-c" style="font-size:11px;color:var(--color-text-secondary, #6b6b65);display:flex;align-items:center;gap:4px"><span style="width:10px;height:10px;border-radius:2px;background:#F5C4B3;display:inline-block"></span> Fase C</span>
     <span style="font-size:11px;color:var(--color-text-secondary, #6b6b65)">┄ borde punteado = 220V monofásico (2 polos)</span>
     <span style="font-size:11px;color:var(--color-text-secondary, #6b6b65)">▮ barra lateral = breaker de 2–3 polos</span>
   </div>
@@ -141,16 +194,16 @@ input,select{padding:6px 10px;font-size:13px;border:0.5px solid var(--color-bord
   <h3 id="form-title">Agregar circuito</h3>
   <div class="field-row">
     <label>Nombre</label>
-    <input id="c-name" placeholder="Nombre del circuito">
+    <input id="c-name" placeholder="Nombre del circuito" />
   </div>
   <div class="field-row">
     <label>Corriente</label>
-    <input id="c-amp" type="number" placeholder="A" min="0.1" step="0.1">
+    <input id="c-amp" type="number" placeholder="A" min="0.1" step="0.1" />
     <label style="margin-left:8px">Tensión</label>
     <select id="c-volt" onchange="voltChanged()">
       <option value="110">110 V – monofásico</option>
-      <option value="220">220 V – monofásico</option>
-      <option value="3f">220 V – trifásico</option>
+      <option value="220">220 V – bifásico</option>
+      <option value="3f" id="opt-3f">220 V – trifásico</option>
     </select>
   </div>
   <div class="chip-row">
@@ -172,7 +225,7 @@ input,select{padding:6px 10px;font-size:13px;border:0.5px solid var(--color-bord
   <div class="err-msg" id="add-err"></div>
   <button type="button" class="add-btn" id="submit-btn" onclick="addCircuit()">+ Agregar</button>
   <button type="button" class="cancel-btn" id="cancel-edit-btn" style="display:none" onclick="cancelEdit()">Cancelar edición</button>
-  <button type="button" class="suggest-btn" onclick="suggestBalance()">✦ Distribución óptima inteligente</button>
+  <button type="button" class="suggest-btn" onclick="suggestBalance()">✦ Distribución óptima automática (Balancear + Rellenar)</button>
 </div>
 
 <div class="card">
@@ -189,9 +242,9 @@ const FP=0.85;
 const OPTS={"110":[{k:"A",l:"A"},{k:"B",l:"B"},{k:"C",l:"C"}],"220":[{k:"AB",l:"A–B"},{k:"BC",l:"B–C"},{k:"AC",l:"A–C"}],"3f":[{k:"ABC",l:"A·B·C"}]};
 let selPhase="A",selVolt="110",currentView="panel";
 let panelSize=24, mainAmp=100, editingId=null;
+let sysType="3"; 
 let lastLayout={placements:[],overflow:[],cols:[new Set(),new Set()]};
 
-// --- Mantuve tu listado original intacto ---
 let circuits=[
   {id:8,name:"Almacen",amp:0.0,volt:"110",phase:"C"},
   {id:9,name:"Contacto Petanca",amp:4.1,volt:"110",phase:"C"},
@@ -214,6 +267,107 @@ let circuits=[
   {id:26,name:"Cooler baños",amp:7.0,volt:"110",phase:"C"}
 ];
 let nextId=27;
+
+function allowDrop(ev) { ev.preventDefault(); }
+function drag(ev, id) { ev.dataTransfer.setData("text/plain", id); }
+
+function getPhaseString(startRow, poles) {
+  if(sysType === "3") {
+    if(poles === 3) return "ABC";
+    if(poles === 1) return ["A","B","C"][startRow % 3];
+    if(poles === 2) {
+      const p1 = ["A","B","C"][startRow % 3];
+      const p2 = ["A","B","C"][(startRow + 1) % 3];
+      if((p1==='A'&&p2==='B')||(p1==='B'&&p2==='A')) return 'AB';
+      if((p1==='B'&&p2==='C')||(p1==='C'&&p2==='B')) return 'BC';
+      if((p1==='A'&&p2==='C')||(p1==='C'&&p2==='A')) return 'AC';
+    }
+  } else {
+    if(poles === 1) return ["A","B"][startRow % 2];
+    if(poles === 2) return "AB";
+  }
+}
+
+function drop(ev, col, row) {
+  ev.preventDefault();
+  const idStr = ev.dataTransfer.getData("text/plain");
+  if(!idStr) return;
+  const id = parseInt(idStr);
+  const c = circuits.find(x => x.id === id);
+  if(!c) return;
+
+  const poles = poleCount(c);
+  const maxRows = Math.max(Math.ceil(panelSize/2), 6);
+  if(row + poles > maxRows) {
+    alert("El circuito es demasiado grande para caber en este espacio hacia abajo.");
+    return;
+  }
+
+  circuits.forEach(other => {
+    if(other.id !== c.id && other.slot && typeof other.slot === 'object' && other.slot.col === col) {
+      const otherPoles = poleCount(other);
+      const cStart = row;
+      const cEnd = row + poles - 1;
+      const oStart = other.slot.row;
+      const oEnd = other.slot.row + otherPoles - 1;
+      if(cStart <= oEnd && cEnd >= oStart) {
+        other.slot = 'unassigned'; 
+      }
+    }
+  });
+
+  c.slot = {col, row};
+  c.phase = getPhaseString(row, poles);
+  
+  if(editingId === c.id) {
+    selPhase = c.phase;
+    buildPhaseUI(c.volt, c.phase);
+  }
+
+  render();
+}
+
+function dropUnassigned(ev) {
+  ev.preventDefault();
+  document.getElementById('unassigned-sidebar').classList.remove('drag-over');
+  const idStr = ev.dataTransfer.getData("text/plain");
+  if(!idStr) return;
+  const id = parseInt(idStr);
+  const c = circuits.find(x => x.id === id);
+  if(c) {
+    c.slot = 'unassigned';
+    render();
+  }
+}
+
+function sysTypeChanged() {
+  sysType = document.getElementById("sys-type").value;
+  circuits.forEach(c => delete c.slot); 
+  
+  if (sysType === "2") {
+    document.getElementById("main-title").textContent = "Centro de carga monofásico / bifásico";
+    document.getElementById("main-sub").textContent = "Circuitos 110 V y 220 V con distribución de espacios a 2 fases (A, B).";
+    document.getElementById("opt-3f").style.display = "none";
+    document.getElementById("legend-phase-c").style.display = "none";
+    document.getElementById("phase-bars-container").style.gridTemplateColumns = "repeat(2, 1fr)";
+    document.querySelector(".phase-c").style.display = "none";
+    
+    circuits = circuits.filter(c => c.volt !== "3f" && c.phase !== "C" && c.phase !== "BC" && c.phase !== "AC");
+    if (selVolt === "3f" || selPhase.includes("C")) {
+      document.getElementById("c-volt").value = "110";
+    }
+  } else {
+    document.getElementById("main-title").textContent = "Centro de carga trifásico";
+    document.getElementById("main-sub").textContent = "Circuitos monofásicos 110 V / 220 V y trifásicos 220 V con distribución de espacios por fase.";
+    document.getElementById("opt-3f").style.display = "block";
+    document.getElementById("legend-phase-c").style.display = "flex";
+    document.getElementById("phase-bars-container").style.gridTemplateColumns = "repeat(3, 1fr)";
+    document.querySelector(".phase-c").style.display = "block";
+  }
+  
+  voltChanged();
+  render();
+}
 
 function phaseAmps(c){
   const a=c.amp;
@@ -245,41 +399,70 @@ function breakerColor(c){
 }
 
 function phaseLabel(c){return c.phase==="ABC"?"A·B·C":c.phase==="AB"?"A–B":c.phase==="BC"?"B–C":c.phase==="AC"?"A–C":c.phase;}
-
 function poleCount(c){ return c.volt==="3f"?3:c.volt==="220"?2:1; }
-function rowPhase(row){ return ["A","B","C"][row%3]; }
+function rowPhase(row){ return sysType==="3" ? ["A","B","C"][row%3] : ["A","B"][row%2]; }
+
 function requiredStartMod(c){
+  if(sysType==="2"){
+    if(c.volt==="110") return {A:0,B:1}[c.phase];
+    return null; 
+  }
   if(c.volt==="110") return {A:0,B:1,C:2}[c.phase];
   if(c.volt==="220") return {AB:0,BC:1,AC:2}[c.phase];
   return null; 
 }
+
 function slotLabel(col,startRow,poles){
   const nums=[];
   for(let k=0;k<poles;k++) nums.push((startRow+k)*2+col+1);
   return nums.join("-");
 }
+
 function computeLayout(list,maxRows){
   const cols=[new Set(),new Set()];
   const placements=[];
   const overflow=[];
+  
+  // 1. Asignaciones estrictamente manuales primero
   list.forEach(c=>{
-    const poles=poleCount(c);
-    const startMod=requiredStartMod(c);
-    let placed=false;
-    for(let r=0; r<=maxRows-poles && !placed; r++){
-      if(startMod!==null && r%3!==startMod) continue;
-      for(let col=0; col<2; col++){
-        let free=true;
-        for(let k=0;k<poles;k++){ if(cols[col].has(r+k)){ free=false; break; } }
-        if(free){
-          for(let k=0;k<poles;k++) cols[col].add(r+k);
-          placements.push({circuit:c,col,startRow:r,poles});
-          placed=true;
-          break;
-        }
+    if(c.slot && typeof c.slot === 'object'){
+      const poles=poleCount(c);
+      let free=true;
+      if(c.slot.row + poles > maxRows) free=false;
+      for(let k=0;k<poles;k++){ if(cols[c.slot.col].has(c.slot.row+k)){ free=false; break; } }
+      if(free){
+        for(let k=0;k<poles;k++) cols[c.slot.col].add(c.slot.row+k);
+        placements.push({circuit:c,col:c.slot.col,startRow:c.slot.row,poles});
+      } else {
+        c.slot = 'unassigned'; 
       }
     }
-    if(!placed) overflow.push(c);
+  });
+
+  // 2. Asignaciones automáticas
+  list.forEach(c=>{
+    if(c.slot === 'unassigned'){
+      overflow.push(c);
+    } else if(!c.slot) {
+      const poles=poleCount(c);
+      const startMod=requiredStartMod(c);
+      let placed=false;
+      const sysMod = sysType==="3" ? 3 : 2;
+      for(let r=0; r<=maxRows-poles && !placed; r++){
+        if(startMod!==null && r%sysMod!==startMod) continue;
+        for(let col=0; col<2; col++){
+          let free=true;
+          for(let k=0;k<poles;k++){ if(cols[col].has(r+k)){ free=false; break; } }
+          if(free){
+            for(let k=0;k<poles;k++) cols[col].add(r+k);
+            placements.push({circuit:c,col,startRow:r,poles});
+            placed=true;
+            break;
+          }
+        }
+      }
+      if(!placed) overflow.push(c);
+    }
   });
   return {placements,overflow,cols};
 }
@@ -291,25 +474,28 @@ function drawPanel(){
   const H=TOP+maxRows*ROW_H+40;
   const midX=W/2;
   const busX={A:midX-25,B:midX,C:midX+25};
+  if(sysType==="2") { busX.A=midX-15; busX.B=midX+15; }
 
   svg.setAttribute("viewBox",`0 0 ${W} ${H}`);
-
   const {placements,cols}=lastLayout;
   const startMap={};
   placements.forEach(p=>{ startMap[p.col+"-"+p.startRow]=p; });
 
+  const titleText = sysType==="3" ? "TABLERO PRINCIPAL — " : "TABLERO MONOFÁSICO — ";
   let els=`
   <rect x="15" y="15" width="${W-30}" height="${H-30}" rx="8" fill="none" stroke="var(--color-border-tertiary, #e5e3dd)" stroke-width="1"/>
-  <text x="${W/2}" y="32" text-anchor="middle" font-size="13" fill="var(--color-text-primary, #1a1a1a)" font-weight="500">TABLERO PRINCIPAL — ${panelSize} ESPACIOS</text>
+  <text x="${W/2}" y="32" text-anchor="middle" font-size="13" fill="var(--color-text-primary, #1a1a1a)" font-weight="500">${titleText}${panelSize} ESPACIOS</text>
 
   <line x1="${busX.A}" y1="${TOP-20}" x2="${busX.A}" y2="${TOP+maxRows*ROW_H}" stroke="#185FA5" stroke-width="3"/>
   <line x1="${busX.B}" y1="${TOP-20}" x2="${busX.B}" y2="${TOP+maxRows*ROW_H}" stroke="#3B6D11" stroke-width="3"/>
-  <line x1="${busX.C}" y1="${TOP-20}" x2="${busX.C}" y2="${TOP+maxRows*ROW_H}" stroke="#993C1D" stroke-width="3"/>
-
   <text x="${busX.A}" y="${TOP-25}" text-anchor="middle" font-size="11" fill="#185FA5" font-weight="bold">A</text>
   <text x="${busX.B}" y="${TOP-25}" text-anchor="middle" font-size="11" fill="#3B6D11" font-weight="bold">B</text>
-  <text x="${busX.C}" y="${TOP-25}" text-anchor="middle" font-size="11" fill="#993C1D" font-weight="bold">C</text>
   `;
+
+  if(sysType==="3") {
+    els+=`<line x1="${busX.C}" y1="${TOP-20}" x2="${busX.C}" y2="${TOP+maxRows*ROW_H}" stroke="#993C1D" stroke-width="3"/>`;
+    els+=`<text x="${busX.C}" y="${TOP-25}" text-anchor="middle" font-size="11" fill="#993C1D" font-weight="bold">C</text>`;
+  }
 
   for(let col=0; col<2; col++){
     const isLeft = col===0;
@@ -326,17 +512,20 @@ function drawPanel(){
         const startX=isLeft? x+BW : x;
         const lbl=slotLabel(col,row,p.poles);
 
-        els+=`<rect x="${x}" y="${boxY}" width="${BW}" height="${boxH}" rx="4" fill="${cl.fill}" stroke="${cl.stroke}" stroke-width="1.5"${cl.dash?' stroke-dasharray="5 3"':""}/>`;
+        els+=`<g draggable="true" ondragstart="drag(event, ${c.id})" style="cursor:grab;">`;
+        els+=`<rect x="${x}" y="${boxY}" width="${BW}" height="${boxH}" rx="4" fill="${cl.fill}" stroke="${cl.stroke}" stroke-width="1.5"${cl.dash?' stroke-dasharray="5 3"':""} ondragover="allowDrop(event)" ondrop="drop(event, ${col}, ${row})"/>`;
 
         if(p.poles>1){
           const tieX=isLeft? x+BW-6 : x;
-          els+=`<rect x="${tieX}" y="${boxY+4}" width="6" height="${boxH-8}" fill="${cl.stroke}" opacity="0.3"/>`;
+          els+=`<rect pointer-events="none" x="${tieX}" y="${boxY+4}" width="6" height="${boxH-8}" fill="${cl.stroke}" opacity="0.3"/>`;
         }
 
         const maxChars=16;
         const name=c.name.length>maxChars?c.name.slice(0,maxChars-1)+"…":c.name;
-        els+=`<text x="${x+8}" y="${boxY+16}" font-size="10" font-weight="500" fill="var(--color-text-primary, #1a1a1a)">${lbl}. ${name}</text>`;
-        els+=`<text x="${x+8}" y="${boxY+30}" font-size="9" fill="var(--color-text-secondary, #6b6b65)">${c.amp}A | ${phaseLabel(c)}</text>`;
+        els+=`<text pointer-events="none" x="${x+8}" y="${boxY+16}" font-size="10" font-weight="500" fill="var(--color-text-primary, #1a1a1a)">${lbl}. ${name}</text>`;
+        els+=`<text pointer-events="none" x="${x+8}" y="${boxY+30}" font-size="9" fill="var(--color-text-secondary, #6b6b65)">${c.amp}A | ${phaseLabel(c)}</text>`;
+        
+        els+=`</g>`;
 
         for(let k=0;k<p.poles;k++){
           const ph=rowPhase(row+k);
@@ -348,23 +537,25 @@ function drawPanel(){
         const y=TOP+row*ROW_H;
         const ph=rowPhase(row);
         const lbl=slotLabel(col,row,1);
-        els+=`<rect x="${x}" y="${y}" width="${BW}" height="38" rx="4" fill="var(--color-background-secondary, #f4f3f1)" stroke="var(--color-border-secondary, #d8d6d0)" stroke-width="0.5" stroke-dasharray="3 3" opacity="0.6"/>`;
-        els+=`<text x="${x+BW/2}" y="${y+22}" text-anchor="middle" font-size="10" fill="var(--color-text-secondary, #6b6b65)">${lbl}. Reserva (Fase ${ph})</text>`;
+        els+=`<rect x="${x}" y="${y}" width="${BW}" height="38" rx="4" fill="var(--color-background-secondary, #f4f3f1)" stroke="var(--color-border-secondary, #d8d6d0)" stroke-width="0.5" stroke-dasharray="3 3" opacity="0.6" ondragover="allowDrop(event)" ondrop="drop(event, ${col}, ${row})" style="cursor:pointer;" />`;
+        els+=`<text pointer-events="none" x="${x+BW/2}" y="${y+22}" text-anchor="middle" font-size="10" fill="var(--color-text-secondary, #6b6b65)">${lbl}. Reserva (Fase ${ph})</text>`;
       }
     }
   }
-
   svg.innerHTML=els;
 }
 
 function drawSingleLine(){
   const svg=document.getElementById("diagram-svg");
+  const activeC = lastLayout.placements.map(p => p.circuit);
   const W=680, BUS_Y=100, CKT_TOP=150, CKT_H=46;
-  const n=circuits.length;
+  const n=activeC.length;
   const H=CKT_TOP+n*CKT_H+40;
   svg.setAttribute("viewBox",`0 0 ${W} ${H}`);
 
-  const xA=120, xB=340, xC=560;
+  const xA=sysType==="3"?120:200;
+  const xB=sysType==="3"?340:360;
+  const xC=560;
 
   let els=`
   <rect x="15" y="15" width="${W-30}" height="${H-30}" rx="8" fill="none" stroke="var(--color-border-tertiary, #e5e3dd)" stroke-width="1"/>
@@ -372,14 +563,16 @@ function drawSingleLine(){
 
   <line x1="${xA}" y1="${BUS_Y}" x2="${xA}" y2="${CKT_TOP+n*CKT_H}" stroke="#185FA5" stroke-width="2" opacity="0.4"/>
   <line x1="${xB}" y1="${BUS_Y}" x2="${xB}" y2="${CKT_TOP+n*CKT_H}" stroke="#3B6D11" stroke-width="2" opacity="0.4"/>
-  <line x1="${xC}" y1="${BUS_Y}" x2="${xC}" y2="${CKT_TOP+n*CKT_H}" stroke="#993C1D" stroke-width="2" opacity="0.4"/>
-
   <text x="${xA}" y="${BUS_Y-8}" text-anchor="middle" font-size="11" fill="#185FA5" font-weight="bold">Barra A</text>
   <text x="${xB}" y="${BUS_Y-8}" text-anchor="middle" font-size="11" fill="#3B6D11" font-weight="bold">Barra B</text>
-  <text x="${xC}" y="${BUS_Y-8}" text-anchor="middle" font-size="11" fill="#993C1D" font-weight="bold">Barra C</text>
   `;
 
-  circuits.forEach((c,i)=>{
+  if(sysType==="3") {
+    els+=`<line x1="${xC}" y1="${BUS_Y}" x2="${xC}" y2="${CKT_TOP+n*CKT_H}" stroke="#993C1D" stroke-width="2" opacity="0.4"/>`;
+    els+=`<text x="${xC}" y="${BUS_Y-8}" text-anchor="middle" font-size="11" fill="#993C1D" font-weight="bold">Barra C</text>`;
+  }
+
+  activeC.forEach((c,i)=>{
     const y=CKT_TOP+i*CKT_H;
     const mid=y+14;
     const cl=breakerColor(c);
@@ -388,7 +581,7 @@ function drawSingleLine(){
 
     if(pa.A>0) els+=`<circle cx="${xA}" cy="${mid}" r="3.5" fill="#185FA5"/><line x1="${xA}" y1="${mid}" x2="${LOAD_X}" y2="${mid}" stroke="var(--color-text-primary, #1a1a1a)" stroke-width="1"/>`;
     if(pa.B>0) els+=`<circle cx="${xB}" cy="${mid}" r="3.5" fill="#3B6D11"/><line x1="${xB}" y1="${mid}" x2="${LOAD_X}" y2="${mid}" stroke="var(--color-text-primary, #1a1a1a)" stroke-width="1"/>`;
-    if(pa.C>0) els+=`<circle cx="${xC}" cy="${mid}" r="3.5" fill="#993C1D"/><line x1="${xC}" y1="${mid}" x2="${LOAD_X}" y2="${mid}" stroke="var(--color-text-primary, #1a1a1a)" stroke-width="1"/>`;
+    if(pa.C>0 && sysType==="3") els+=`<circle cx="${xC}" cy="${mid}" r="3.5" fill="#993C1D"/><line x1="${xC}" y1="${mid}" x2="${LOAD_X}" y2="${mid}" stroke="var(--color-text-primary, #1a1a1a)" stroke-width="1"/>`;
 
     const symX = LOAD_X - 40;
     els += `<path d="M ${symX+10} ${mid} A 6 6 0 0 0 ${symX+22} ${mid}" fill="none" stroke="var(--color-text-primary, #1a1a1a)" stroke-width="1.5"/>`;
@@ -396,7 +589,6 @@ function drawSingleLine(){
     els+=`<rect x="${LOAD_X}" y="${mid-12}" width="110" height="24" rx="3" fill="${cl.fill}" stroke="${cl.stroke}" stroke-width="1"/>`;
     els+=`<text x="${LOAD_X+55}" y="${mid+4}" text-anchor="middle" font-size="9" font-weight="500" fill="${cl.text}">${c.name.slice(0,16)}</text>`;
   });
-
   svg.innerHTML=els;
 }
 
@@ -417,7 +609,8 @@ function buildPhaseUI(volt,current){
   } else {
     group.style.display="flex";
     document.getElementById("phase-label").textContent = volt==="110" ? "Fase" : "Combinación de fases";
-    const opts=OPTS[volt];
+    let opts=OPTS[volt];
+    if(sysType==="2"){ opts = opts.filter(o => !o.k.includes("C")); }
     opts.forEach(o=>{
       const btn=document.createElement("button");
       btn.type="button";
@@ -425,7 +618,7 @@ function buildPhaseUI(volt,current){
       btn.onclick=()=>selectPhase(o.k);
       group.appendChild(btn);
     });
-    const init=current&&opts.find(o=>o.k===current)?current:opts[0].k;
+    let init = current && opts.find(o=>o.k===current) ? current : opts[0].k;
     selectPhase(init);
   }
   updatePhaseHint(volt);
@@ -435,7 +628,7 @@ function updatePhaseHint(volt){
   const hint=document.getElementById("phase-hint");
   const v=volt||selVolt;
   if(v==="110") hint.textContent="Ocupa 1 espacio físico en el bus de la fase elegida.";
-  else if(v==="220") hint.textContent="Ocupa 2 espacios físicos consecutivos del mismo lado (par de fases).";
+  else if(v==="220") hint.textContent="Ocupa 2 espacios físicos consecutivos del mismo lado.";
   else hint.textContent="Ocupa 3 espacios físicos consecutivos (A·B·C).";
 }
 
@@ -470,7 +663,10 @@ function addCircuit(){
 
   if(editingId!==null){
     const c=circuits.find(x=>x.id===editingId);
-    if(c){ c.name=name; c.amp=amp; c.volt=volt; c.phase=phase; }
+    if(c){ 
+      c.name=name; c.amp=amp; c.volt=volt; c.phase=phase; 
+      delete c.slot; 
+    }
     cancelEdit();
   } else {
     circuits.push({id:nextId++,name,amp,volt,phase});
@@ -523,28 +719,41 @@ function mainAmpChanged(){
   render();
 }
 
-// ==== NUEVA LÓGICA DE BALANCEO INTELIGENTE (RESPETA ESPACIOS) ====
+// ALGORITMO ACTUALIZADO: TETRIS PARA MÁXIMA CAPACIDAD
 function suggestBalance(){
+  circuits.forEach(c => delete c.slot); // Limpiar para que el algoritmo trabaje libremente
   const load={A:0,B:0,C:0};
-  const fixed = circuits.filter(c=>c.volt==="3f");
-  fixed.forEach(c=>{ load.A+=c.amp; load.B+=c.amp; load.C+=c.amp; });
-
-  const candidates = circuits.filter(c=>c.volt!=="3f").sort((a,b)=>b.amp-a.amp);
-  let optimizedSoFar = [...fixed];
+  let optimizedSoFar = [];
   const maxRows = Math.max(Math.ceil(panelSize/2), 6);
+  
+  // LA MAGIA: Primero se ordenan por Polos (3, luego 2, luego 1) y después por Amperaje
+  // Así nos aseguramos de meter primero los breakers grandes que necesitan más espacio continuo
+  const allSorted = [...circuits].sort((a,b) => {
+    const pA = poleCount(a);
+    const pB = poleCount(b);
+    if(pA !== pB) return pB - pA; // Mayor número de polos primero
+    return b.amp - a.amp; // Mayor amperaje para balancear la carga fuerte rápido
+  });
 
-  candidates.forEach(c=>{
+  allSorted.forEach(c=>{
     let bestPhase = null;
     let bestSpread = Infinity;
-    const opts = c.volt==="110" ? ["A","B","C"] : ["AB","BC","AC"];
+    
+    let opts = [];
+    if(c.volt === "3f") {
+        opts = ["ABC"];
+    } else if(sysType === "3") {
+        opts = c.volt==="110" ? ["A","B","C"] : ["AB","BC","AC"];
+    } else {
+        opts = c.volt==="110" ? ["A","B"] : ["AB"];
+    }
 
     opts.forEach(testPhase => {
       c.phase = testPhase;
-      // Simulamos físicamente con los circuitos ya optimizados hasta ahora, respetando el ID original
-      const testGroup = [...optimizedSoFar, c].sort((a,b) => circuits.indexOf(a) - circuits.indexOf(b));
+      // Simulamos enviar el grupo en el orden correcto para no romper el empaquetado Tetris
+      const testGroup = [...optimizedSoFar, c]; 
       const simLayout = computeLayout(testGroup, maxRows);
       
-      // Checamos si esta fase genera overflow para este circuito
       const fits = !simLayout.overflow.some(x => x.id === c.id);
 
       if(fits) {
@@ -552,37 +761,28 @@ function suggestBalance(){
         if(testPhase.includes("A")) simA += c.amp;
         if(testPhase.includes("B")) simB += c.amp;
         if(testPhase.includes("C")) simC += c.amp;
-        const spread = Math.max(simA,simB,simC) - Math.min(simA,simB,simC);
+        
+        let spread = sysType === "3" 
+            ? Math.max(simA,simB,simC) - Math.min(simA,simB,simC)
+            : Math.abs(simA - simB);
         
         if(spread < bestSpread){
-          bestSpread = spread;
-          bestPhase = testPhase;
+          bestSpread = spread; bestPhase = testPhase;
         }
       }
     });
 
-    // Fallback: Si el tablero ya está tan lleno que no cabe en ninguna configuración física, 
-    // balancea ignorando los rieles (inevitablemente se irá a overflow, pero no arruinará el promedio global)
-    if(bestPhase === null){
-      opts.forEach(testPhase => {
-        let simA = load.A, simB = load.B, simC = load.C;
-        if(testPhase.includes("A")) simA += c.amp;
-        if(testPhase.includes("B")) simB += c.amp;
-        if(testPhase.includes("C")) simC += c.amp;
-        const spread = Math.max(simA,simB,simC) - Math.min(simA,simB,simC);
-        if(spread < bestSpread){
-          bestSpread = spread;
-          bestPhase = testPhase;
-        }
-      });
+    if(bestPhase !== null) {
+      c.phase = bestPhase;
+      if(bestPhase.includes("A")) load.A += c.amp;
+      if(bestPhase.includes("B")) load.B += c.amp;
+      if(bestPhase.includes("C")) load.C += c.amp;
+      optimizedSoFar.push(c);
+    } else {
+      // Si el panel de verdad ya no tiene espacios físicos posibles para este circuito, lo mandamos directo a Sin asignar
+      c.slot = 'unassigned';
+      optimizedSoFar.push(c);
     }
-
-    c.phase = bestPhase;
-    if(bestPhase.includes("A")) load.A += c.amp;
-    if(bestPhase.includes("B")) load.B += c.amp;
-    if(bestPhase.includes("C")) load.C += c.amp;
-    
-    optimizedSoFar.push(c);
   });
   
   render();
@@ -596,15 +796,20 @@ function phaseClass(c){return c.phase==="ABC"||c.phase==="AB"||c.phase==="BC"||c
 function render(){
   const maxRows=Math.max(Math.ceil(panelSize/2),6);
   lastLayout=computeLayout(circuits,maxRows);
+  
+  // SOLAMENTE calculamos las métricas usando los circuitos que SÍ cupieron en el tablero
+  const activeCircuits = lastLayout.placements.map(p => p.circuit);
 
-  const sum=k=>circuits.reduce((s,c)=>s+phaseAmps(c)[k],0);
-  const sumW=k=>circuits.reduce((s,c)=>s+phaseWatts(c)[k],0);
+  const sum=k=>activeCircuits.reduce((s,c)=>s+phaseAmps(c)[k],0);
+  const sumW=k=>activeCircuits.reduce((s,c)=>s+phaseWatts(c)[k],0);
   const fa=sum("A"),fb=sum("B"),fc=sum("C");
   const wa=sumW("A"),wb=sumW("B"),wc=sumW("C");
-  const avg=(fa+fb+fc)/3;
-  const unbal=avg>0?((Math.max(fa,fb,fc)-Math.min(fa,fb,fc))/avg*100):0;
+  
   const totalW=wa+wb+wc;
-  const maxPhase=Math.max(fa,fb,fc);
+  const avg = sysType==="3" ? (fa+fb+fc)/3 : (fa+fb)/2;
+  const maxPhase = sysType==="3" ? Math.max(fa,fb,fc) : Math.max(fa,fb);
+  const minPhase = sysType==="3" ? Math.min(fa,fb,fc) : Math.min(fa,fb);
+  const unbal = avg>0 ? ((maxPhase-minPhase)/avg*100) : 0;
   const capPct=mainAmp>0?(maxPhase/mainAmp*100):0;
 
   document.getElementById("m-kw").textContent=(totalW/1000).toFixed(2)+" kW";
@@ -624,14 +829,16 @@ function render(){
   else if(unbal<20){ sEl.textContent="Aceptable"; sEl.className="val warn"; }
   else{ sEl.textContent="Desbalanceado"; sEl.className="val bad"; }
 
-  const maxBar=Math.max(fa,fb,fc,1);
-  [["A","a",fa,wa],["B","b",fb,wb],["C","c",fc,wc]].forEach(([P,p,amp,w])=>{
+  const maxBar=Math.max(fa,fb,sysType==="3"?fc:0,1);
+  const phases = sysType==="3" ? [["A","a",fa,wa],["B","b",fb,wb],["C","c",fc,wc]] : [["A","a",fa,wa],["B","b",fb,wb]];
+  
+  phases.forEach(([P,p,amp,w])=>{
     document.getElementById("f"+p+"-a").textContent=amp.toFixed(1)+" A";
     document.getElementById("f"+p+"-w").textContent=(w/1000).toFixed(2)+" kW";
     document.getElementById("f"+p+"-bar").style.width=(amp/maxBar*100)+"%";
     const list=document.getElementById("f"+p+"-list");
     list.innerHTML="";
-    circuits.forEach(c=>{
+    activeCircuits.forEach(c=>{
       const a=phaseAmps(c);
       if(a[P]<=0) return;
       const row=document.createElement("div");
@@ -641,10 +848,24 @@ function render(){
     });
   });
 
+  const unassignedList = document.getElementById("unassigned-list");
+  unassignedList.innerHTML = "";
+  lastLayout.overflow.forEach(c => {
+    unassignedList.innerHTML += `
+      <div class="u-item" draggable="true" ondragstart="drag(event, ${c.id})">
+        <div class="u-item-title">${c.name}</div>
+        <div class="u-item-meta">
+          <span class="badge ${badgeClass(c.volt)}">${voltLabel(c)}</span>
+          <span style="font-weight:500;">${c.amp} A</span>
+        </div>
+      </div>
+    `;
+  });
+
   const overflowEl=document.getElementById("overflow-banner");
   if(lastLayout.overflow.length){
     overflowEl.style.display="block";
-    overflowEl.textContent=`⚠ ${lastLayout.overflow.length} circuito(s) no caben en un panel de ${panelSize} espacios: ${lastLayout.overflow.map(c=>c.name).join(", ")}. Elige un panel más grande o elimina circuitos.`;
+    overflowEl.textContent=`⚠ Tienes ${lastLayout.overflow.length} circuito(s) en la zona de "Sin asignar" que no han sido contados en la carga del panel.`;
   } else {
     overflowEl.style.display="none";
   }
@@ -659,7 +880,7 @@ function render(){
     const v=c.volt==="3f"?220:parseInt(c.volt);
     const pw=c.volt==="3f"?Math.sqrt(3)*v*c.amp*FP:v*c.amp*FP;
     const p=placementById[c.id];
-    const space=overflowIds.has(c.id)?`<span class="overflow-flag">Sin espacio</span>`:(p?slotLabel(p.col,p.startRow,p.poles):"—");
+    const space=overflowIds.has(c.id)?`<span class="overflow-flag">Sin asignar</span>`:(p?slotLabel(p.col,p.startRow,p.poles):"—");
     const tr=document.createElement("tr");
     tr.innerHTML=`<td>${i+1}</td><td>${c.name}</td><td><span class="badge ${badgeClass(c.volt)}">${voltLabel(c)}</span></td><td>${poleCount(c)}</td><td>${c.amp.toFixed(1)} A</td><td>${(pw/1000).toFixed(2)} kW</td><td class="${phaseClass(c)}">${phaseDisp(c)}</td><td>${space}</td><td><button type="button" class="edit" aria-label="Editar circuito" onclick="editCircuit(${c.id})">✎</button><button type="button" class="del" aria-label="Eliminar circuito" onclick="delCircuit(${c.id})">×</button></td>`;
     tbody.appendChild(tr);
