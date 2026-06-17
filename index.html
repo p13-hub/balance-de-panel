@@ -49,7 +49,6 @@ input,select{padding:6px 10px;font-size:13px;border:0.5px solid var(--color-bord
 .settings-row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:.75rem 0}
 .settings-row label{font-size:12px;color:var(--color-text-secondary, #6b6b65)}
 .overflow-banner{background:#FAECE7;border:0.5px solid #993C1D;color:#712B13;border-radius:var(--border-radius-md, 8px);padding:.6rem .85rem;font-size:12px;margin-bottom:.75rem;line-height:1.4}
-.note{font-size:11px;color:var(--color-text-secondary, #6b6b65);margin-top:.5rem}
 .tbl{width:100%;border-collapse:collapse;font-size:12px}
 .tbl th{text-align:left;color:var(--color-text-secondary, #6b6b65);font-weight:400;border-bottom:0.5px solid var(--color-border-tertiary, #e5e3dd);padding:5px 6px}
 .tbl td{padding:5px 6px;color:var(--color-text-primary, #1a1a1a);border-bottom:0.5px solid var(--color-border-tertiary, #e5e3dd)}
@@ -89,10 +88,15 @@ input,select{padding:6px 10px;font-size:13px;border:0.5px solid var(--color-bord
 .u-item-title { font-weight: 500; margin-bottom: 4px; color: var(--color-text-primary, #1a1a1a); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .u-item-meta { display: flex; justify-content: space-between; color: var(--color-text-secondary, #6b6b65); }
 
+/* MEJORA UX VISUAL DEL TABLERO */
+.svg-drop-target { transition: all 0.15s ease; }
+.svg-drop-target.drag-hover { stroke: #1a1a1a !important; stroke-width: 3px !important; filter: brightness(0.95); opacity: 0.95; }
+.tips-box { background: #F4F3F1; padding: 10px 14px; border-radius: 8px; font-size: 12px; color: #6B6B65; margin-bottom: 14px; display:flex; align-items:center; gap:10px; line-height: 1.4; border: 0.5px solid #d8d6d0;}
+
 @media print {
   body { background: #ffffff; }
   * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-  .card:nth-of-type(2), .settings-row, .tab-btn, #btn-export-pdf, .edit, .del, .chip-row, .suggest-btn, .unassigned-sidebar { display: none !important; }
+  .card:nth-of-type(2), .settings-row, .tab-btn, #btn-export-pdf, .edit, .del, .chip-row, .suggest-btn, .unassigned-sidebar, .tips-box { display: none !important; }
   .wrap { max-width: 100%; padding: 0; }
   .card { border: none; padding: 0; margin-bottom: 2rem; page-break-inside: avoid; }
   .panel-wrap { overflow: visible !important; }
@@ -170,13 +174,18 @@ input,select{padding:6px 10px;font-size:13px;border:0.5px solid var(--color-bord
 
   <div class="overflow-banner" id="overflow-banner" style="display:none"></div>
 
+  <div class="tips-box">
+    <span style="font-size:18px;">💡</span> 
+    <span><strong>Tip de acomodo:</strong> Arrastra circuitos desde la lista lateral hacia los espacios vacíos del tablero. Si sueltas uno sobre otro, el viejo se reemplazará automáticamente. Haz <strong>DOBLE CLIC</strong> en cualquier circuito dentro del panel para sacarlo rápidamente.</span>
+  </div>
+
   <div class="layout-container">
     <div class="panel-wrap">
       <svg id="diagram-svg" class="panel-svg" width="100%" viewBox="0 0 680 440"></svg>
     </div>
     
-    <div class="unassigned-sidebar" id="unassigned-sidebar" ondragover="allowDrop(event)" ondrop="dropUnassigned(event)" ondragenter="this.classList.add('drag-over')" ondragleave="this.classList.remove('drag-over')">
-      <h4 style="font-size:12px;margin-bottom:12px;color:var(--color-text-secondary);text-transform:uppercase;letter-spacing:0.05em;">Zona Sin Asignar / Arrastra aquí para remover</h4>
+    <div class="unassigned-sidebar" id="unassigned-sidebar" ondragover="allowDropSidebar(event)" ondrop="dropUnassigned(event)" ondragenter="this.classList.add('drag-over')" ondragleave="this.classList.remove('drag-over')">
+      <h4 style="font-size:12px;margin-bottom:12px;color:var(--color-text-secondary);text-transform:uppercase;letter-spacing:0.05em;">Zona Sin Asignar</h4>
       <div id="unassigned-list"></div>
     </div>
   </div>
@@ -225,7 +234,7 @@ input,select{padding:6px 10px;font-size:13px;border:0.5px solid var(--color-bord
   <div class="err-msg" id="add-err"></div>
   <button type="button" class="add-btn" id="submit-btn" onclick="addCircuit()">+ Agregar</button>
   <button type="button" class="cancel-btn" id="cancel-edit-btn" style="display:none" onclick="cancelEdit()">Cancelar edición</button>
-  <button type="button" class="suggest-btn" onclick="suggestBalance()">✦ Distribución óptima automática (Balancear + Rellenar)</button>
+  <button type="button" class="suggest-btn" onclick="suggestBalance()">✦ Distribución óptima automática</button>
 </div>
 
 <div class="card">
@@ -268,8 +277,26 @@ let circuits=[
 ];
 let nextId=27;
 
-function allowDrop(ev) { ev.preventDefault(); }
+// --- EVENTOS DRAG & DROP MEJORADOS ---
+function allowDropSidebar(ev) { ev.preventDefault(); }
 function drag(ev, id) { ev.dataTransfer.setData("text/plain", id); }
+
+function allowDropSvg(ev) {
+  ev.preventDefault();
+  if(ev.target && ev.target.classList) ev.target.classList.add('drag-hover');
+}
+function leaveSvg(ev) {
+  if(ev.target && ev.target.classList) ev.target.classList.remove('drag-hover');
+}
+function dropSvg(ev, col, row) {
+  ev.preventDefault();
+  if(ev.target && ev.target.classList) ev.target.classList.remove('drag-hover');
+  processDrop(ev, col, row);
+}
+function moveToUnassigned(id) {
+  const c = circuits.find(x => x.id === id);
+  if(c) { c.slot = 'unassigned'; render(); }
+}
 
 function getPhaseString(startRow, poles) {
   if(sysType === "3") {
@@ -288,8 +315,7 @@ function getPhaseString(startRow, poles) {
   }
 }
 
-function drop(ev, col, row) {
-  ev.preventDefault();
+function processDrop(ev, col, row) {
   const idStr = ev.dataTransfer.getData("text/plain");
   if(!idStr) return;
   const id = parseInt(idStr);
@@ -298,11 +324,9 @@ function drop(ev, col, row) {
 
   const poles = poleCount(c);
   const maxRows = Math.max(Math.ceil(panelSize/2), 6);
-  if(row + poles > maxRows) {
-    alert("El circuito es demasiado grande para caber en este espacio hacia abajo.");
-    return;
-  }
+  if(row + poles > maxRows) return; // No cabe físicamente hacia abajo, lo ignoramos
 
+  // Revisar colisiones y mandar el circuito estorbante a la barra lateral
   circuits.forEach(other => {
     if(other.id !== c.id && other.slot && typeof other.slot === 'object' && other.slot.col === col) {
       const otherPoles = poleCount(other);
@@ -333,11 +357,7 @@ function dropUnassigned(ev) {
   const idStr = ev.dataTransfer.getData("text/plain");
   if(!idStr) return;
   const id = parseInt(idStr);
-  const c = circuits.find(x => x.id === id);
-  if(c) {
-    c.slot = 'unassigned';
-    render();
-  }
+  moveToUnassigned(id);
 }
 
 function sysTypeChanged() {
@@ -512,8 +532,9 @@ function drawPanel(){
         const startX=isLeft? x+BW : x;
         const lbl=slotLabel(col,row,p.poles);
 
-        els+=`<g draggable="true" ondragstart="drag(event, ${c.id})" style="cursor:grab;">`;
-        els+=`<rect x="${x}" y="${boxY}" width="${BW}" height="${boxH}" rx="4" fill="${cl.fill}" stroke="${cl.stroke}" stroke-width="1.5"${cl.dash?' stroke-dasharray="5 3"':""} ondragover="allowDrop(event)" ondrop="drop(event, ${col}, ${row})"/>`;
+        // Agregamos `pointer-events: none` a todo el interior para que no bloquee el drag
+        els+=`<g draggable="true" ondragstart="drag(event, ${c.id})" ondragover="allowDropSvg(event)" ondragleave="leaveSvg(event)" ondrop="dropSvg(event, ${col}, ${row})" ondblclick="moveToUnassigned(${c.id})" style="cursor:grab;">`;
+        els+=`<rect class="svg-drop-target" x="${x}" y="${boxY}" width="${BW}" height="${boxH}" rx="4" fill="${cl.fill}" stroke="${cl.stroke}" stroke-width="1.5"${cl.dash?' stroke-dasharray="5 3"':""} />`;
 
         if(p.poles>1){
           const tieX=isLeft? x+BW-6 : x;
@@ -525,20 +546,22 @@ function drawPanel(){
         els+=`<text pointer-events="none" x="${x+8}" y="${boxY+16}" font-size="10" font-weight="500" fill="var(--color-text-primary, #1a1a1a)">${lbl}. ${name}</text>`;
         els+=`<text pointer-events="none" x="${x+8}" y="${boxY+30}" font-size="9" fill="var(--color-text-secondary, #6b6b65)">${c.amp}A | ${phaseLabel(c)}</text>`;
         
-        els+=`</g>`;
-
         for(let k=0;k<p.poles;k++){
           const ph=rowPhase(row+k);
           const cy=boxY+k*ROW_H+19;
-          els+=`<line x1="${startX}" y1="${cy}" x2="${busX[ph]}" y2="${cy}" stroke="var(--color-text-primary, #1a1a1a)" stroke-width="1.2"/>`;
-          els+=`<circle cx="${busX[ph]}" cy="${cy}" r="3" fill="var(--color-text-primary, #1a1a1a)"/>`;
+          els+=`<line pointer-events="none" x1="${startX}" y1="${cy}" x2="${busX[ph]}" y2="${cy}" stroke="var(--color-text-primary, #1a1a1a)" stroke-width="1.2"/>`;
+          els+=`<circle pointer-events="none" cx="${busX[ph]}" cy="${cy}" r="3" fill="var(--color-text-primary, #1a1a1a)"/>`;
         }
+        els+=`</g>`;
+        
       } else if(!cols[col].has(row)){
         const y=TOP+row*ROW_H;
         const ph=rowPhase(row);
         const lbl=slotLabel(col,row,1);
-        els+=`<rect x="${x}" y="${y}" width="${BW}" height="38" rx="4" fill="var(--color-background-secondary, #f4f3f1)" stroke="var(--color-border-secondary, #d8d6d0)" stroke-width="0.5" stroke-dasharray="3 3" opacity="0.6" ondragover="allowDrop(event)" ondrop="drop(event, ${col}, ${row})" style="cursor:pointer;" />`;
+        els+=`<g ondragover="allowDropSvg(event)" ondragleave="leaveSvg(event)" ondrop="dropSvg(event, ${col}, ${row})" style="cursor:pointer;">`;
+        els+=`<rect class="svg-drop-target" x="${x}" y="${y}" width="${BW}" height="38" rx="4" fill="var(--color-background-secondary, #f4f3f1)" stroke="var(--color-border-secondary, #d8d6d0)" stroke-width="0.5" stroke-dasharray="3 3" opacity="0.6" />`;
         els+=`<text pointer-events="none" x="${x+BW/2}" y="${y+22}" text-anchor="middle" font-size="10" fill="var(--color-text-secondary, #6b6b65)">${lbl}. Reserva (Fase ${ph})</text>`;
+        els+=`</g>`;
       }
     }
   }
@@ -719,20 +742,17 @@ function mainAmpChanged(){
   render();
 }
 
-// ALGORITMO ACTUALIZADO: TETRIS PARA MÁXIMA CAPACIDAD
 function suggestBalance(){
-  circuits.forEach(c => delete c.slot); // Limpiar para que el algoritmo trabaje libremente
+  circuits.forEach(c => delete c.slot); 
   const load={A:0,B:0,C:0};
   let optimizedSoFar = [];
   const maxRows = Math.max(Math.ceil(panelSize/2), 6);
   
-  // LA MAGIA: Primero se ordenan por Polos (3, luego 2, luego 1) y después por Amperaje
-  // Así nos aseguramos de meter primero los breakers grandes que necesitan más espacio continuo
   const allSorted = [...circuits].sort((a,b) => {
     const pA = poleCount(a);
     const pB = poleCount(b);
-    if(pA !== pB) return pB - pA; // Mayor número de polos primero
-    return b.amp - a.amp; // Mayor amperaje para balancear la carga fuerte rápido
+    if(pA !== pB) return pB - pA; 
+    return b.amp - a.amp; 
   });
 
   allSorted.forEach(c=>{
@@ -750,7 +770,6 @@ function suggestBalance(){
 
     opts.forEach(testPhase => {
       c.phase = testPhase;
-      // Simulamos enviar el grupo en el orden correcto para no romper el empaquetado Tetris
       const testGroup = [...optimizedSoFar, c]; 
       const simLayout = computeLayout(testGroup, maxRows);
       
@@ -779,7 +798,6 @@ function suggestBalance(){
       if(bestPhase.includes("C")) load.C += c.amp;
       optimizedSoFar.push(c);
     } else {
-      // Si el panel de verdad ya no tiene espacios físicos posibles para este circuito, lo mandamos directo a Sin asignar
       c.slot = 'unassigned';
       optimizedSoFar.push(c);
     }
@@ -797,7 +815,6 @@ function render(){
   const maxRows=Math.max(Math.ceil(panelSize/2),6);
   lastLayout=computeLayout(circuits,maxRows);
   
-  // SOLAMENTE calculamos las métricas usando los circuitos que SÍ cupieron en el tablero
   const activeCircuits = lastLayout.placements.map(p => p.circuit);
 
   const sum=k=>activeCircuits.reduce((s,c)=>s+phaseAmps(c)[k],0);
