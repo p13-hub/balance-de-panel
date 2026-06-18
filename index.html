@@ -6,28 +6,28 @@
 <title>Centro de carga</title>
 <style>
 :root{
-  --bg-base:#F2F2F7;
-  --bg-sidebar:rgba(247,247,250,0.92);
+  --bg-base:#FFFFFF;
+  --bg-sidebar:rgba(255,255,255,0.94);
   --bg-card:#FFFFFF;
-  --bg-card-alt:#F6F6F9;
-  --bg-input:#F2F2F6;
-  --text-primary:#1C1C1E;
-  --text-secondary:#6E6E73;
-  --text-tertiary:#AEAEB2;
-  --separator:rgba(60,60,67,0.13);
-  --separator-strong:rgba(60,60,67,0.24);
+  --bg-card-alt:#F5F5F5;
+  --bg-input:#F2F2F2;
+  --text-primary:#0A0A0A;
+  --text-secondary:#6B6B6B;
+  --text-tertiary:#A8A8A8;
+  --separator:rgba(10,10,10,0.12);
+  --separator-strong:rgba(10,10,10,0.22);
 
-  --blue:#007AFF; --blue-bg:#E8F1FE; --blue-text:#0040C7;
-  --green:#34C759; --green-bg:#E7F8EC; --green-text:#1B7A37;
-  --purple:#AF52DE; --purple-bg:#F3E8FC; --purple-text:#6B2E9E;
-  --orange:#FF9500; --orange-bg:#FFF1DC; --orange-text:#99570A;
-  --indigo:#5856D6; --indigo-bg:#ECEBFB; --indigo-text:#3A38A8;
+  --blue:#E4002B; --blue-bg:#FDE7EA; --blue-text:#B4001F;
+  --green:#0A0A0A; --green-bg:#ECECEC; --green-text:#0A0A0A;
+  --purple:#8A8A8E; --purple-bg:#EFEFEF; --purple-text:#4A4A4E;
+  --orange:#E4002B; --orange-bg:#FDE7EA; --orange-text:#B4001F;
+  --indigo:#0A0A0A; --indigo-bg:#ECECEC; --indigo-text:#0A0A0A;
 
-  --ok:#1F8A3B; --warn:#BF5B04; --bad:#D70015; --bad-bg:#FFE9E9;
+  --ok:#0A0A0A; --warn:#B4001F; --bad:#E4002B; --bad-bg:#FDE7EA;
 
   --r-lg:18px; --r-md:13px; --r-sm:9px; --r-xs:7px;
-  --shadow-card:0 1px 1px rgba(0,0,0,0.03), 0 6px 16px rgba(28,28,30,0.05);
-  --shadow-pop:0 2px 4px rgba(0,0,0,0.06), 0 10px 24px rgba(28,28,30,0.10);
+  --shadow-card:0 1px 1px rgba(0,0,0,0.04), 0 6px 16px rgba(0,0,0,0.07);
+  --shadow-pop:0 2px 4px rgba(0,0,0,0.08), 0 10px 24px rgba(0,0,0,0.14);
   --font:-apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
 }
 
@@ -358,6 +358,36 @@ input:focus, select:focus{ outline:2px solid var(--blue); outline-offset:1px; }
   background:transparent; color:var(--blue);
 }
 .btn-plain:hover{background:var(--blue-bg);}
+.btn-plain-strong{
+  padding:9px 18px; font-size:14px; font-weight:600;
+  border-radius:99px; border:1.5px solid var(--text-primary);
+  background:transparent; color:var(--text-primary);
+  display:inline-flex; align-items:center;
+}
+.btn-plain-strong:hover{background:var(--text-primary); color:#fff;}
+
+.balances-sub{font-size:12.5px; color:var(--text-secondary); line-height:1.5; margin-bottom:14px; max-width:560px;}
+.balances-sub code{background:var(--bg-card-alt); padding:1px 5px; border-radius:5px; font-size:11.5px;}
+
+.balance-row{
+  display:flex; align-items:center; gap:12px; padding:12px 4px;
+  border-bottom:0.5px solid var(--separator);
+}
+.balance-row:last-child{border-bottom:none;}
+.balance-row .br-info{flex:1; min-width:0;}
+.balance-row .br-name{font-weight:600; font-size:13.5px; color:var(--text-primary); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.balance-row .br-meta{font-size:11.5px; color:var(--text-secondary); margin-top:2px;}
+.balance-row .br-actions{display:flex; gap:8px; flex:0 0 auto;}
+.br-load{
+  padding:6px 14px; font-size:12.5px; font-weight:600; border-radius:99px;
+  border:none; background:var(--blue); color:#fff;
+}
+.br-load:hover{background:#0067D6;}
+.br-del{
+  padding:6px 12px; font-size:12.5px; font-weight:600; border-radius:99px;
+  border:none; background:var(--bad-bg); color:var(--bad);
+}
+.br-del:hover{opacity:0.8;}
 
 .suggest-btn{
   display:inline-flex; align-items:center; gap:7px;
@@ -450,6 +480,10 @@ input:focus, select:focus{ outline:2px solid var(--blue); outline-offset:1px; }
         <button type="button" class="side-link" data-sec="circuitos" onclick="showSection('circuitos',this)">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M4 12h16M4 18h10"/></svg>
           Circuitos
+        </button>
+        <button type="button" class="side-link" data-sec="balances" onclick="showSection('balances',this)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="8" ry="3"/><path d="M4 5v6c0 1.66 3.58 3 8 3s8-1.34 8-3V5"/><path d="M4 11v6c0 1.66 3.58 3 8 3s8-1.34 8-3v-6"/></svg>
+          Balances
         </button>
       </nav>
 
@@ -630,6 +664,45 @@ input:focus, select:focus{ outline:2px solid var(--blue); outline-offset:1px; }
         </div>
       </section>
 
+      <!-- ===================== BALANCES ===================== -->
+      <section id="section-balances" class="panel">
+        <div class="card form-card">
+          <h3>Guardar este balance</h3>
+          <p class="balances-sub">Se descarga un archivo <code>.json</code> con todos tus circuitos, fases y configuración. Guárdalo en Archivos / iCloud Drive de tu iPad — es tu copia portátil de este balance.</p>
+          <div class="form-row">
+            <div class="field" style="flex:1;">
+              <label for="balance-name">Nombre del balance</label>
+              <input id="balance-name" placeholder="Ej. Restaurante — planta baja" />
+            </div>
+          </div>
+          <div class="form-actions">
+            <button type="button" class="btn-primary" onclick="saveBalanceToFile()">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:15px;height:15px;vertical-align:-2px;margin-right:5px;"><path d="M12 3v12m0 0 4-4m-4 4-4-4"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>
+              Guardar balance
+            </button>
+          </div>
+        </div>
+
+        <div class="card form-card">
+          <h3>Cargar un balance guardado</h3>
+          <p class="balances-sub">Elige un archivo <code>.json</code> exportado antes desde esta misma app. Sus circuitos y configuración reemplazarán lo que tengas en pantalla, y podrás seguir editándolo normalmente.</p>
+          <input type="file" id="balance-file-input" accept="application/json,.json" style="display:none" onchange="loadBalanceFromFile(event)">
+          <div class="form-actions">
+            <button type="button" class="btn-plain-strong" onclick="document.getElementById('balance-file-input').click()">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:15px;height:15px;vertical-align:-2px;margin-right:5px;"><path d="M12 15V3m0 0 4 4m-4-4-4 4"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>
+              Elegir archivo…
+            </button>
+          </div>
+          <div class="err-msg" id="balance-load-err"></div>
+        </div>
+
+        <div class="card table-card" id="balance-library-card" style="display:none">
+          <h3>Guardados en este dispositivo</h3>
+          <p class="balances-sub">Acceso rápido sin tener que buscar el archivo. Esta lista vive sólo en esta sesión de la app — el archivo descargado sigue siendo tu copia permanente.</p>
+          <div id="balance-library-list"></div>
+        </div>
+      </section>
+
     </main>
   </div>
 </div>
@@ -753,22 +826,14 @@ function dropUnassigned(ev) {
   moveToUnassigned(id);
 }
 
-function sysTypeChanged() {
-  sysType = document.getElementById("sys-type").value;
-  circuits.forEach(c => delete c.slot); 
-  
-  if (sysType === "2") {
+function applySysModeUI(type) {
+  if (type === "2") {
     document.getElementById("main-title").textContent = "Centro de carga monofásico / bifásico";
     document.getElementById("main-sub").textContent = "Circuitos 110 V y 220 V con distribución de espacios a 2 fases (A, B).";
     document.getElementById("opt-3f").style.display = "none";
     document.getElementById("legend-phase-c").style.display = "none";
     document.getElementById("phase-bars-container").style.gridTemplateColumns = "repeat(2, 1fr)";
     document.querySelector(".phase-c").style.display = "none";
-    
-    circuits = circuits.filter(c => c.volt !== "3f" && c.phase !== "C" && c.phase !== "BC" && c.phase !== "AC");
-    if (selVolt === "3f" || selPhase.includes("C")) {
-      document.getElementById("c-volt").value = "110";
-    }
   } else {
     document.getElementById("main-title").textContent = "Centro de carga trifásico";
     document.getElementById("main-sub").textContent = "Circuitos monofásicos 110 V / 220 V y trifásicos 220 V con distribución de espacios por fase.";
@@ -776,6 +841,19 @@ function sysTypeChanged() {
     document.getElementById("legend-phase-c").style.display = "flex";
     document.getElementById("phase-bars-container").style.gridTemplateColumns = "repeat(3, 1fr)";
     document.querySelector(".phase-c").style.display = "block";
+  }
+}
+
+function sysTypeChanged() {
+  sysType = document.getElementById("sys-type").value;
+  circuits.forEach(c => delete c.slot); 
+  applySysModeUI(sysType);
+
+  if (sysType === "2") {
+    circuits = circuits.filter(c => c.volt !== "3f" && c.phase !== "C" && c.phase !== "BC" && c.phase !== "AC");
+    if (selVolt === "3f" || selPhase.includes("C")) {
+      document.getElementById("c-volt").value = "110";
+    }
   }
   
   voltChanged();
@@ -1369,6 +1447,133 @@ function render(){
   currentView==="panel"?drawPanel():drawSingleLine();
 }
 
+// ==== GUARDAR / CARGAR BALANCES (archivo .json + biblioteca rápida opcional) ====
+function buildBalanceSnapshot(name){
+  return {
+    app:"centro-carga-ipad", version:1,
+    name: name || ("Balance " + new Date().toLocaleDateString('es-MX')),
+    savedAt: new Date().toISOString(),
+    sysType, panelSize, mainAmp,
+    circuits: circuits.map(c=>({
+      id:c.id, name:c.name, amp:c.amp, volt:c.volt, phase:c.phase,
+      slot: (c.slot && typeof c.slot==="object") ? {col:c.slot.col, row:c.slot.row} : null
+    }))
+  };
+}
+
+function slugify(s){
+  return (s||"balance").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"")
+    .replace(/[^a-z0-9]+/g,"-").replace(/(^-|-$)/g,"") || "balance";
+}
+
+async function saveBalanceToFile(){
+  const name=document.getElementById("balance-name").value.trim();
+  const snap=buildBalanceSnapshot(name);
+
+  const blob=new Blob([JSON.stringify(snap,null,2)],{type:"application/json"});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement("a");
+  a.href=url;
+  a.download=slugify(snap.name)+"-"+snap.savedAt.slice(0,10)+".json";
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+
+  if(typeof window.storage!=="undefined"){
+    try{
+      await window.storage.set("balance:"+Date.now(), JSON.stringify(snap), false);
+      refreshBalanceLibrary();
+    }catch(e){ /* sin biblioteca rápida disponible; el archivo descargado ya quedó guardado */ }
+  }
+}
+
+function loadBalanceFromFile(ev){
+  const file=ev.target.files && ev.target.files[0];
+  if(!file) return;
+  const errEl=document.getElementById("balance-load-err");
+  errEl.textContent="";
+  const reader=new FileReader();
+  reader.onload=()=>{
+    try{
+      applyBalanceSnapshot(JSON.parse(reader.result));
+    }catch(e){
+      errEl.textContent="No se pudo leer ese archivo. Verifica que sea un balance exportado desde esta misma app.";
+    }
+  };
+  reader.onerror=()=>{ errEl.textContent="No se pudo abrir el archivo."; };
+  reader.readAsText(file);
+  ev.target.value="";
+}
+
+function applyBalanceSnapshot(data){
+  if(!data || !Array.isArray(data.circuits)) throw new Error("formato inválido");
+
+  circuits = data.circuits.map(c=>({
+    id:c.id, name:c.name, amp:c.amp, volt:c.volt, phase:c.phase,
+    ...(c.slot ? {slot:{col:c.slot.col, row:c.slot.row}} : {})
+  }));
+  nextId = circuits.reduce((m,c)=>Math.max(m,c.id),0)+1;
+
+  sysType = data.sysType==="2" ? "2" : "3";
+  document.getElementById("sys-type").value=sysType;
+  applySysModeUI(sysType);
+
+  panelSize = [12,18,24,30,42].includes(data.panelSize) ? data.panelSize : 24;
+  document.getElementById("panel-size").value=String(panelSize);
+
+  mainAmp = (typeof data.mainAmp==="number" && data.mainAmp>0) ? data.mainAmp : 100;
+  document.getElementById("main-amp").value=mainAmp;
+
+  cancelEdit();
+  voltChanged();
+  render();
+  showSection('resumen', document.querySelector('.side-link[data-sec="resumen"]'));
+}
+
+async function refreshBalanceLibrary(){
+  const card=document.getElementById("balance-library-card");
+  const list=document.getElementById("balance-library-list");
+  if(typeof window.storage==="undefined"){ card.style.display="none"; return; }
+
+  let keysRes;
+  try{ keysRes=await window.storage.list("balance:", false); }
+  catch(e){ card.style.display="none"; return; }
+
+  const keys=(keysRes && keysRes.keys) ? keysRes.keys : [];
+  if(!keys.length){ card.style.display="none"; return; }
+
+  const entries=[];
+  for(const k of keys){
+    try{
+      const r=await window.storage.get(k,false);
+      if(r) entries.push({key:k, data:JSON.parse(r.value)});
+    }catch(e){ /* clave dañada o inaccesible, se omite */ }
+  }
+  entries.sort((a,b)=>(b.data.savedAt||"").localeCompare(a.data.savedAt||""));
+
+  if(!entries.length){ card.style.display="none"; return; }
+  card.style.display="block";
+  list.innerHTML="";
+  entries.forEach(e=>{
+    const d=e.data;
+    const dt=d.savedAt ? new Date(d.savedAt).toLocaleString('es-MX',{day:"2-digit",month:"short",hour:"2-digit",minute:"2-digit"}) : "";
+    const row=document.createElement("div");
+    row.className="balance-row";
+    row.innerHTML=`<div class="br-info"><div class="br-name">${d.name||"Balance"}</div><div class="br-meta">${(d.circuits||[]).length} circuitos · ${dt}</div></div>
+      <div class="br-actions"><button type="button" class="br-load">Cargar</button><button type="button" class="br-del">Eliminar</button></div>`;
+    row.querySelector(".br-load").onclick=()=>applyBalanceSnapshot(d);
+    row.querySelector(".br-del").onclick=()=>deleteStoredBalance(e.key);
+    list.appendChild(row);
+  });
+}
+
+async function deleteStoredBalance(key){
+  try{ await window.storage.delete(key,false); }catch(e){}
+  refreshBalanceLibrary();
+}
+
+refreshBalanceLibrary();
 buildPhaseUI("110",null);
 render();
 </script>
